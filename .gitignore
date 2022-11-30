@@ -2,3 +2,6 @@
 venv
 .mapbox_token
 *.csv
+data
+data/**
+/data

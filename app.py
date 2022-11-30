@@ -202,7 +202,7 @@ app.layout = html.Div([
             children=[
                 html.Button(
                     "Reset All",
-                    id="clear-all",
+                    id="clear-placeholder",
                     className="reset-button",
                 ),
             ]
@@ -263,9 +263,20 @@ for id in ["indicator", "placeholder", "map"]:
 def reset_map(*args):
     return None
 
+@app.callback(
+    Output("indicator-graph", "figure"),
+    Output("map-graph", "figure"),
+    Input("map-graph", "relayoutData"))
+def update_plots(relayout_data):
 
+    # test_df = get_dataset(client, "cell_towers_ddf")
+    test_df = pd.read_csv('/Users/jamesswank/Desktop/TestingData_coordinates.csv')
 
-
+    
+    coordinates_4326 = relayout_data and relayout_data.get("mapbox._derived", {}).get(
+        "coordinates", None
+    )
+    return(print(test_df))
 
 if __name__ == '__main__':
     app.run_server(port=8000,debug=True)
