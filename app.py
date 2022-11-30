@@ -140,7 +140,19 @@ app.layout = html.Div([
             className="svg-container",
             style={"height": 150},
         ),
-    ])
+        html.Div(
+            children=[
+                html.Button(
+                    "Reset All",
+                    id="clear-all",
+                    className="reset-button",
+                ),
+            ]
+        ),
+    ],
+        className="six columns pretty_container",
+        id="indicator-div",
+    ),
 ])
 
 
