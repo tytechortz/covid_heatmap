@@ -153,6 +153,18 @@ app.layout = html.Div([
         className="six columns pretty_container",
         id="indicator-div",
     ),
+    html.Div([
+        html.H4([
+            "Locations",
+            html.Img(
+                id="show-map-modal",
+                src="assets/question-circle-solid.svg",
+                className="info-icon",
+            ),
+        ]),
+    ],
+        className="container_title",
+    ),
 ])
 
 
