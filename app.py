@@ -255,5 +255,17 @@ for id in ["indicator", "placeholder", "map"]:
             return {"display": "none"}, {"zIndex": 0}
 
 
+# Create clear/reset button callbacks
+@app.callback(
+    Output("map-graph", "relayoutData"),
+    [Input("reset-map", "n_clicks"), Input("clear-all", "n_clicks")],
+)
+def reset_map(*args):
+    return None
+
+
+
+
+
 if __name__ == '__main__':
     app.run_server(port=8000,debug=True)
