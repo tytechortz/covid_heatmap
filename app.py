@@ -94,7 +94,7 @@ def build_modal_info_overlay(id, side, content):
         style={"display": "none"},
     )
 
-    return 
+    return div
 
 
 # Build Dash layout
@@ -109,6 +109,28 @@ app.layout = html.Div([
     html.Div([
         build_modal_info_overlay(
             "indicator",
+            "bottom",
+            dedent(
+                """
+                Words
+                """
+            ),
+        ),
+    ]),
+    html.Div([
+        build_modal_info_overlay(
+            "placeholder",
+            "bottom",
+            dedent(
+                """
+                Words
+                """
+            ),
+        ),
+    ]),
+    html.Div([
+        build_modal_info_overlay(
+            "map",
             "bottom",
             dedent(
                 """
@@ -158,7 +180,7 @@ app.layout = html.Div([
             html.H4([
                 "Placeholder",
                 html.Img(
-                    id="show-indicator-modal",
+                    id="show-placeholder-modal",
                     src="assets/question-circle-solid.svg",
                     n_clicks=0,
                     className="info-icon",
@@ -169,7 +191,7 @@ app.layout = html.Div([
         ),
         dcc.Loading(
             dcc.Graph(
-                id="indicator-graph",
+                id="placeholder-graph",
                 figure=blank_fig(row_heights[0]),
                 config={"displayModeBar": False},
             ),
@@ -187,7 +209,7 @@ app.layout = html.Div([
         ),
     ],
         className="six columns pretty_container",
-        id="indicator-div",
+        id="placeholder-div",
     ),
     html.Div([
         html.H4([
@@ -217,6 +239,20 @@ app.layout = html.Div([
         id="map-div",
     )
 ])
+
+# Create show/hide callbacks for each info modal
+for id in ["indicator", "placeholder", "map"]:
+
+    @app.callback(
+        [Output(f"{id}-modal", "style"), Output(f"{id}-div", "style")],
+        [Input(f"show-{id}-modal", "n_clicks"), Input(f"close-{id}-modal", "n_clicks")],
+    )
+    def toggle_modal(n_show, n_close):
+        ctx = dash.callback_context
+        if ctx.triggered and ctx.triggered[0]["prop_id"].startswith("show-"):
+            return {"display": "block"}, {"zIndex": 1003}
+        else:
+            return {"display": "none"}, {"zIndex": 0}
 
 
 if __name__ == '__main__':
