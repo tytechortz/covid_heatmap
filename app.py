@@ -54,3 +54,6 @@ def blank_fig(height):
             "yaxis": {"visible": False},
         },
     }
+
+# Load mapbox token
+mapbox_access_token = open(".mapbox_token").read()
