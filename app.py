@@ -102,11 +102,47 @@ app = dash.Dash(__name__)
 
 app.layout = html.Div([
     html.Div([
-
+        html.H4("Covid-19 Testing")
     ],
         className = 'row'
     ),
+    html.Div([
+        build_modal_info_overlay(
+            "indicator",
+            "bottom",
+            dedent(
+                """
+                Words
+                """
+            ),
+        ),
+    ]),
+    html.Div([
+        html.Div([
+            html.H4([
+                "Selected Tests",
+                html.Img(
+                    id="show-indicator-modal",
+                    src="assets/question-circle-solid.svg",
+                    n_clicks=0,
+                    className="info-icon",
+                ),
+            ]),
+        ],
+            className="container_title",
+        ),
+        dcc.Loading(
+            dcc.Graph(
+                id="indicator-graph",
+                figure=blank_fig(row_heights[0]),
+                config={"displayModeBar": False},
+            ),
+            className="svg-container",
+            style={"height": 150},
+        ),
+    ])
 ])
+
 
 if __name__ == '__main__':
     app.run_server(port=8000,debug=True)
