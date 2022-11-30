@@ -104,6 +104,9 @@ app.layout = html.Div([
     html.Div([
 
     ],
-        className = row
+        className = 'row'
     ),
 ])
+
+if __name__ == '__main__':
+    app.run_server(port=8000,debug=True)
