@@ -57,3 +57,41 @@ def blank_fig(height):
 
 # Load mapbox token
 mapbox_access_token = open(".mapbox_token").read()
+
+def build_modal_info_overlay(id, side, content):
+    """
+    Build div representing the info overlay for a plot panel
+    """
+    div = html.Div(
+        [  # modal div
+            html.Div(
+                [  # content div
+                    html.Div(
+                        [
+                            html.H4(
+                                [
+                                    "Info",
+                                    html.Img(
+                                        id=f"close-{id}-modal",
+                                        src="assets/times-circle-solid.svg",
+                                        n_clicks=0,
+                                        className="info-icon",
+                                        style={"margin": 0},
+                                    ),
+                                ],
+                                className="container_title",
+                                style={"color": "white"},
+                            ),
+                            dcc.Markdown(content),
+                        ]
+                    )
+                ],
+                className=f"modal-content {side}",
+            ),
+            html.Div(className="modal"),
+        ],
+        id=f"{id}-modal",
+        style={"display": "none"},
+    )
+
+    return 
