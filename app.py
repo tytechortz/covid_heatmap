@@ -154,6 +154,42 @@ app.layout = html.Div([
         id="indicator-div",
     ),
     html.Div([
+        html.Div([
+            html.H4([
+                "Placeholder",
+                html.Img(
+                    id="show-indicator-modal",
+                    src="assets/question-circle-solid.svg",
+                    n_clicks=0,
+                    className="info-icon",
+                ),
+            ]),
+        ],
+            className="container_title",
+        ),
+        dcc.Loading(
+            dcc.Graph(
+                id="indicator-graph",
+                figure=blank_fig(row_heights[0]),
+                config={"displayModeBar": False},
+            ),
+            className="svg-container",
+            style={"height": 150},
+        ),
+        html.Div(
+            children=[
+                html.Button(
+                    "Reset All",
+                    id="clear-all",
+                    className="reset-button",
+                ),
+            ]
+        ),
+    ],
+        className="six columns pretty_container",
+        id="indicator-div",
+    ),
+    html.Div([
         html.H4([
             "Locations",
             html.Img(
@@ -161,10 +197,25 @@ app.layout = html.Div([
                 src="assets/question-circle-solid.svg",
                 className="info-icon",
             ),
-        ]),
+        ],
+            className="container_title",
+        ),
+        dcc.Graph(
+            id="map-graph",
+            figure=blank_fig(row_heights[1]),
+            config={"displayModeBar": False},
+        ),
+        html.Button(
+            "Reset View", id="reset-map", className="reset-button"
+        ),
     ],
-        className="container_title",
-    ),
+        className="twelve columns pretty_container",
+        style={
+            "width": "98%",
+            "margin-right": "0",
+        },
+        id="map-div",
+    )
 ])
 
 
