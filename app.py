@@ -95,3 +95,15 @@ def build_modal_info_overlay(id, side, content):
     )
 
     return 
+
+
+# Build Dash layout
+app = dash.Dash(__name__)
+
+app.layout = html.Div([
+    html.Div([
+
+    ],
+        className = row
+    ),
+])
