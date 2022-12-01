@@ -10,6 +10,7 @@ import dask
 
 import datashader as ds
 import datashader.transfer_functions as tf
+from datashader.colors import inferno, Hot
 import numpy as np
 import pandas as pd
 from distributed import Client
@@ -267,12 +268,13 @@ def reset_map(*args):
 
 @app.callback(
     Output("indicator-graph", "figure"),
-    # Output("map-graph", "value"),
+    Output("map-graph", "figure"),
     Input("map-graph", "relayoutData"))
 def update_plots(relayout_data):
 
     # test_df = get_dataset(client, "cell_towers_ddf")
     df = pd.read_csv('/Users/jamesswank/Desktop/TestingData_coordinates.csv')
+    df["tests"] = 1
 
     trans = Transformer.from_crs(
         "epsg:4326",
@@ -292,7 +294,220 @@ def update_plots(relayout_data):
     coordinates_4326 = relayout_data and relayout_data.get("mapbox._derived", {}).get(
         "coordinates", None
     )
-    return(print(df))
+
+    data_3857 = ([df['x_3857'].min(), df['y_3857'].min()],
+                [df['x_3857'].max(), df['y_3857'].max()])
+
+    data_center_3857 = [
+        [
+            (data_3857[0][0] + data_3857[1][0]) / 2.0,
+            (data_3857[0][1] + data_3857[1][1]) / 2.0,
+        ]
+    ]
+
+    transformer_3857_to_4326 = Transformer.from_crs("epsg:3857", "epsg:4326")
+
+    def epsg_3857_to_4326(coords):
+        return [list(reversed(transformer_3857_to_4326.transform(*row))) for row in coords]
+
+    data_4326 = epsg_3857_to_4326(data_3857)
+    data_center_4326 = epsg_3857_to_4326(data_center_3857)
+
+
+    if coordinates_4326:
+        lons, lats = zip(*coordinates_4326)
+        lon0, lon1 = max(min(lons), df[0][0]), min(max(lons), df[1][0])
+        lat0, lat1 = max(min(lats), df[0][1]), min(max(lats), df[1][1])
+        coordinates_4326 = [
+            [lon0, lat0],
+            [lon1, lat1],
+        ]
+        coordinates_3857 = epsg_4326_to_3857(coordinates_4326)
+        # position = {}
+        position = {
+            "zoom": relayout_data.get("mapbox.zoom", None),
+            "center": relayout_data.get("mapbox.center", None),
+        }
+    else:
+        position = {
+            "zoom": 0.5,
+            "pitch": 0,
+            "bearing": 0,
+            "center": {"lon": data_center_4326[0][0], "lat": data_center_4326[0][1]},
+        }
+        coordinates_3857 = data_3857
+        coordinates_4326 = data_4326
+
+    new_coordinates = [
+        [coordinates_4326[0][0], coordinates_4326[1][1]],
+        [coordinates_4326[1][0], coordinates_4326[1][1]],
+        [coordinates_4326[1][0], coordinates_4326[0][1]],
+        [coordinates_4326[0][0], coordinates_4326[0][1]],
+    ]
+
+    x_range, y_range = zip(*coordinates_3857)
+    x0, x1 = x_range
+    y0, y1 = y_range
+
+    # Build query expressions
+    query_expr_xy = (
+        f"(x_3857 >= {x0}) & (x_3857 <= {x1}) & (y_3857 >= {y0}) & (y_3857 <= {y1})"
+    )
+    query_expr_range_created_parts = []
+
+    # Build dataframe containing rows that satisfy the range and created selections
+    if query_expr_range_created_parts:
+        query_expr_range_created = " & ".join(query_expr_range_created_parts)
+        ddf_selected_range_created = df.query(query_expr_range_created)
+    else:
+        ddf_selected_range_created = df
+
+    # Build dataframe containing rows of towers within the map viewport
+    df_xy = df.query(query_expr_xy) if query_expr_xy else df
+
+
+    cvs = ds.Canvas(plot_width=700, plot_height=400, x_range=x_range, y_range=y_range)
+    agg = cvs.points(
+        ddf_selected_range_created, x="x_3857", y="y_3857", agg=ds.count("tests")
+    )
+
+    # Count the number of selected towers
+    n_selected = int(agg.sum())
+
+    # Build indicator figure
+    n_selected_indicator = {
+        "data": [
+            {
+                "type": "indicator",
+                "value": n_selected,
+                "number": {"font": {"color": "#263238"}},
+            }
+        ],
+        "layout": {
+            "template": template,
+            "height": 150,
+            "margin": {"l": 10, "r": 10, "t": 10, "b": 10},
+        },
+    }
+
+    if n_selected == 0:
+        # Nothing to display
+        lat = [None]
+        lon = [None]
+        customdata = [None]
+        marker = {}
+        layers = []
+    # elif n_selected < 5000:
+    #     # Display each individual point using a scattermapbox trace. This way we can
+    #     # give each individual point a tooltip
+    #     ddf_small_expr = " & ".join(
+    #         [query_expr_xy]
+    #         + [f"(radio in {selected_radio_categories})"]
+    #         + query_expr_range_created_parts
+    #     )
+    #     ddf_small = df.query(ddf_small_expr)
+    #     (
+    #         lat,
+    #         lon,
+    #         radio,
+    #         log10_range,
+    #         description,
+    #         mcc,
+    #         net,
+    #         created,
+    #         status,
+    #     ) = dask.compute(
+    #         ddf_small.lat,
+    #         ddf_small.lon,
+    #         ddf_small.radio,
+    #         ddf_small.log10_range,
+    #         ddf_small.Description,
+    #         ddf_small.mcc,
+    #         ddf_small.net,
+    #         ddf_small.created,
+    #         ddf_small.Status,
+    #     )
+
+    else:
+        # Shade aggregation into an image that we can add to the map as a mapbox
+        # image layer
+        img = tf.shade(agg, cmap=Hot, min_alpha=100).to_pil()
+
+        # Resize image to map size to reduce image blurring on zoom.
+        img = img.resize((1400, 800))
+
+        # Add image as mapbox image layer. Note that as of version 4.4, plotly will
+        # automatically convert the PIL image object into a base64 encoded png string
+        layers = [
+            {"sourcetype": "image", "source": img, "coordinates": new_coordinates}
+        ]
+
+        # Do not display any mapbox markers
+        lat = [None]
+        lon = [None]
+        customdata = [None]
+        marker = {}
+
+
+
+    # Build map figure
+    map_graph = {
+        "data": [
+            {
+                "type": "scattermapbox",
+                "lat": lat,
+                "lon": lon,
+                "customdata": customdata,
+                "marker": marker,
+                "hovertemplate": (
+                    "<b>%{customdata[2]}</b><br>"
+                    "MCC: %{customdata[3]}<br>"
+                    "MNC: %{customdata[4]}<br>"
+                    "radio: %{customdata[0]}<br>"
+                    "range: %{customdata[1]:,} m<br>"
+                    "created: %{customdata[5]}<br>"
+                    "status: %{customdata[6]}<br>"
+                    "longitude: %{lon:.3f}&deg;<br>"
+                    "latitude: %{lat:.3f}&deg;<br>"
+                    "<extra></extra>"
+                ),
+            }
+        ],
+        "layout": {
+            "template": template,
+            "uirevision": True,
+            "mapbox": {
+                "style": "light",
+                "accesstoken": mapbox_access_token,
+                "layers": layers,
+            },
+            "margin": {"r": 0, "t": 0, "l": 0, "b": 0},
+            "height": 500,
+            "shapes": [
+                {
+                    "type": "rect",
+                    "xref": "paper",
+                    "yref": "paper",
+                    "x0": 0,
+                    "y0": 0,
+                    "x1": 1,
+                    "y1": 1,
+                    "line": {
+                        "width": 2,
+                        "color": "#B0BEC5",
+                    },
+                }
+            ],
+        },
+    }
+
+    map_graph["layout"]["mapbox"].update(position)
+
+
+
+
+
+    return n_selected_indicator, map_graph
 
 if __name__ == '__main__':
     app.run_server(port=8000,debug=True)
