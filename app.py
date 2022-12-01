@@ -455,22 +455,22 @@ def update_plots(relayout_data):
         "data": [
             {
                 "type": "scattermapbox",
-                "lat": lat,
-                "lon": lon,
+                "lat": df.geolatitude,
+                "lon": df.geolongitude,
                 "customdata": customdata,
                 "marker": marker,
-                "hovertemplate": (
-                    "<b>%{customdata[2]}</b><br>"
-                    "MCC: %{customdata[3]}<br>"
-                    "MNC: %{customdata[4]}<br>"
-                    "radio: %{customdata[0]}<br>"
-                    "range: %{customdata[1]:,} m<br>"
-                    "created: %{customdata[5]}<br>"
-                    "status: %{customdata[6]}<br>"
-                    "longitude: %{lon:.3f}&deg;<br>"
-                    "latitude: %{lat:.3f}&deg;<br>"
-                    "<extra></extra>"
-                ),
+                # "hovertemplate": (
+                #     "<b>%{customdata[2]}</b><br>"
+                #     "MCC: %{customdata[3]}<br>"
+                #     "MNC: %{customdata[4]}<br>"
+                #     "radio: %{customdata[0]}<br>"
+                #     "range: %{customdata[1]:,} m<br>"
+                #     "created: %{customdata[5]}<br>"
+                #     "status: %{customdata[6]}<br>"
+                #     "longitude: %{lon:.3f}&deg;<br>"
+                #     "latitude: %{lat:.3f}&deg;<br>"
+                #     "<extra></extra>"
+                # ),
             }
         ],
         "layout": {
