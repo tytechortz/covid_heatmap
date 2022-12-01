@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 from distributed import Client
 
+from pyproj import Transformer
+
 from utils import (
     # compute_range_created_radio_hist,
     epsg_4326_to_3857,
@@ -265,18 +267,32 @@ def reset_map(*args):
 
 @app.callback(
     Output("indicator-graph", "figure"),
-    Output("map-graph", "figure"),
+    # Output("map-graph", "value"),
     Input("map-graph", "relayoutData"))
 def update_plots(relayout_data):
 
     # test_df = get_dataset(client, "cell_towers_ddf")
-    test_df = pd.read_csv('/Users/jamesswank/Desktop/TestingData_coordinates.csv')
+    df = pd.read_csv('/Users/jamesswank/Desktop/TestingData_coordinates.csv')
 
+    trans = Transformer.from_crs(
+        "epsg:4326",
+        "+proj=utm +zone=13N +ellps=WGS84",
+        always_xy=True,
+    )
+
+    # transformer = Transformer.from_crs("epsg:4326", "epsg:3857", always_xy=True)
     
+
+    x_3857,  y_3857 = trans.transform(df.geolongitude.values, df.geolatitude.values)
+    df = df.assign(x_3857=x_3857, y_3857=y_3857)
+    # xx, yy = transformer.transform(df["geolongitude"].values, df["geolatitude"].values)
+    # df["x_3857"] = xx
+    # df["y_3857"] = yy
+
     coordinates_4326 = relayout_data and relayout_data.get("mapbox._derived", {}).get(
         "coordinates", None
     )
-    return(print(test_df))
+    return(print(df))
 
 if __name__ == '__main__':
     app.run_server(port=8000,debug=True)
