@@ -297,6 +297,8 @@ def update_plots(relayout_data):
 
     data_3857 = ([df['x_3857'].min(), df['y_3857'].min()],
                 [df['x_3857'].max(), df['y_3857'].max()])
+    print(data_3857)
+    
 
     data_center_3857 = [
         [
@@ -304,6 +306,7 @@ def update_plots(relayout_data):
             (data_3857[0][1] + data_3857[1][1]) / 2.0,
         ]
     ]
+    print(data_center_3857)
 
     transformer_3857_to_4326 = Transformer.from_crs("epsg:3857", "epsg:4326")
 
@@ -311,8 +314,9 @@ def update_plots(relayout_data):
         return [list(reversed(transformer_3857_to_4326.transform(*row))) for row in coords]
 
     data_4326 = epsg_3857_to_4326(data_3857)
+    print(data_4326)
     data_center_4326 = epsg_3857_to_4326(data_center_3857)
-
+    print(data_center_4326)
 
     if coordinates_4326:
         lons, lats = zip(*coordinates_4326)
