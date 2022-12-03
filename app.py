@@ -15,7 +15,8 @@ import numpy as np
 import pandas as pd
 from distributed import Client
 
-from pyproj import Transformer
+from pyproj import Transformer, Proj
+import utm
 
 from utils import (
     # compute_range_created_radio_hist,
@@ -294,10 +295,11 @@ def update_plots(relayout_data):
     coordinates_4326 = relayout_data and relayout_data.get("mapbox._derived", {}).get(
         "coordinates", None
     )
+    # print("C4326={}".format(coordinates_4326))
 
-    data_3857 = ([df['x_3857'].min(), df['y_3857'].min()],
-                [df['x_3857'].max(), df['y_3857'].max()])
-    print(data_3857)
+    data_3857 = [[df['x_3857'].min(), df['y_3857'].min()],
+                [df['x_3857'].max(), df['y_3857'].max()]]
+    print("d3857={}".format(data_3857))
     
 
     data_center_3857 = [
@@ -306,17 +308,60 @@ def update_plots(relayout_data):
             (data_3857[0][1] + data_3857[1][1]) / 2.0,
         ]
     ]
-    print(data_center_3857)
+    print("dc3857={}".format(data_center_3857))
+    print(data_3857[0][0])
 
-    transformer_3857_to_4326 = Transformer.from_crs("epsg:3857", "epsg:4326")
+    data_4326 = [[utm.to_latlon(data_3857[0][0], data_3857[0][1],13, 'S')], [utm.to_latlon(data_3857[1][0], data_3857[1][1],13, 'S')]]
+    
 
-    def epsg_3857_to_4326(coords):
-        return [list(reversed(transformer_3857_to_4326.transform(*row))) for row in coords]
+    # transformer_3857_to_4326 = Transformer.from_crs("epsg:3857", "epsg:4326")
+    p = Proj(proj="utm", zone=13, ellps="WGS84")
 
-    data_4326 = epsg_3857_to_4326(data_3857)
+    # def epsg_3857_to_4326(coords):
+        # return [list(reversed(transformer_3857_to_4326.transform(*row))) for row in coords]
+    
+
+    # data_4326 = [utm.to_latlon(data_3857[0], data_3857[1]) for item in data_3857]
+    # data_4326 = item.utm.to_latlon()
+
+    # for x, y in data_3857:
+    #     x = utm.latlon(x[0][0], 13)
+    #     y = utm.latlon(y[0][1], 13)
+    # data_4326 = [x,y]
+
+    # def convert_3857_to_4326():
+    #     data_4326 = zip(*data_3857)
+    #     return data_4326
+
+    
+    
+    # data_4326 = convert_3857_to_4326()
+    # data_4326 = convert_3857_to_4326()
+    # for x, y in zip(*data_3857):
+    #     p(x, y, inverse=True)
+    # print(i for i in data_4326)
     print(data_4326)
-    data_center_4326 = epsg_3857_to_4326(data_center_3857)
-    print(data_center_4326)
+
+    # dcx = 532631.46
+    # dcy = 4379605.76
+    # data_center_4326
+    # wgs84 = Proj(proj="utm", zone=13, ellps="WGS84")
+    # data_center_4326 = wgs84(dcx, dcy, inverse=True)
+
+    # trans2 = Transformer.from_crs(
+    #     "epsg:3857",
+    #     "+proj=utm +zone=13N +ellps=WGS84",
+    #     always_xy=True,
+    # )
+
+    # dcxll = trans2.transform(dcx, dcy)
+    # print("DCXLL={}".format(dcxll))
+
+    # data_4326 = epsg_3857_to_4326(data_3857)
+    # print("Data_4326 = {}".format(data_4326))
+    # print("d4325={}".format(data_4326))
+    # data_center_4326 = epsg_3857_to_4326(data_center_3857)
+    # print(data_center_4326)
 
     if coordinates_4326:
         lons, lats = zip(*coordinates_4326)
