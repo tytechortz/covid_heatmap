@@ -291,10 +291,10 @@ def update_plots(relayout_data):
     coordinates_4326 = relayout_data and relayout_data.get("mapbox._derived", {}).get(
         "coordinates", None
     )
-    print("coords_4326 = {}".format(coordinates_4326))
+    # print("coords_4326 = {}".format(coordinates_4326))
 
-    data_3857 = [[df['x_3857'].min(), df['y_3857'].min()],
-                [df['x_3857'].max(), df['y_3857'].max()]]
+    data_3857 = [[df['y_3857'].min(), df['x_3857'].min()],
+                [df['y_3857'].max(), df['x_3857'].max()]]
     print("d3857={}".format(data_3857))
     
 
@@ -305,37 +305,45 @@ def update_plots(relayout_data):
     print("dc3857={}".format(data_center_3857))
     # print(data_3857[0][0])
 
-    data_4326 = utm.to_latlon(data_3857[0][0], data_3857[0][1], 13, 'S'), utm.to_latlon(data_3857[1][0], data_3857[1][1],13, 'S')
+    data_4326 = utm.to_latlon(data_3857[0][1], data_3857[0][0], 13, 'S'), utm.to_latlon(data_3857[1][1], data_3857[1][0],13, 'S')
     
-    # print(data_4326)
+    # print("DATA 4326 = {}".format(data_4326))
     # print("this is {}".format(data_3857[0]))
     # print("that is {}".format(data_3857[1]))
-    data_center_4326 = [utm.to_latlon(data_center_3857[0], data_center_3857[1], 13, 'S')]
+    data_center_4326 = [utm.to_latlon(data_center_3857[1], data_center_3857[0], 13, 'S')]
     # data_center_4326 = [
     #     [
     #         (data_4326[0][0] + data_4326[1][0]) / 2.0,
     #         (data_4326[0][1] + data_4326[1][1]) / 2.0,
     #     ]
     # ]
-    print("data 4326 - {}".format(data_4326))
-    print(data_center_4326)
+    # print("data 4326 - {}".format(data_4326))
+    # print(data_center_4326)
 
     if coordinates_4326:
         lons, lats = zip(*coordinates_4326)
-        lon0, lon1 = max(min(lons), df[0][0]), min(max(lons), df[1][0])
-        lat0, lat1 = max(min(lats), df[0][1]), min(max(lats), df[1][1])
+        # print("lons-{}".format(lons))
+        # print("lats-{}".format(lats))
+        # print("data_4326 0 0 = {}".format(data_4326[0][0]))
+        lon0, lon1 = max(min(lons), data_4326[0][1]), min(max(lons), data_4326[1][1])
+        lat0, lat1 = max(min(lats), data_4326[0][0]), min(max(lats), data_4326[1][0])
+        # print("lon0 = {} lat0 = {}".format(lon0, lat0))
         coordinates_4326 = [
             [lon0, lat0],
             [lon1, lat1],
         ]
-        print(coordinates_4326)
-        coordinates_3857 = epsg_4326_to_3857(coordinates_4326)
+        # print(coordinates_4326)
+        # coordinates_3857 = epsg_4326_to_3857(coordinates_4326)
+        coordinates_3857 = utm.from_latlon(coordinates_4326[0][1], coordinates_4326[0][0]), utm.from_latlon(coordinates_4326[1][1], coordinates_4326[1][0])
+        coordinates_3857 = [[coordinates_3857[0][1], coordinates_3857[0][0]], [coordinates_3857[1][1], coordinates_3857[1][0]]]
+        # print("Right Here = {}".format(coordinates_3857))
+
         # position = {}
         position = {
-            # "zoom": relayout_data.get("mapbox.zoom", None),
-            "zoom": 8,
-            # "center": relayout_data.get("mapbox.center", None),
-            "center": data_center_3857,
+            "zoom": relayout_data.get("mapbox.zoom", None),
+            # "zoom": 8,
+            "center": relayout_data.get("mapbox.center", None),
+            # "center": data_center_3857,
         }
     else:
         position = {
@@ -357,14 +365,19 @@ def update_plots(relayout_data):
         [coordinates_4326[0][0], coordinates_4326[0][1]],
     ]
 
-    x_range, y_range = zip(*coordinates_3857)
+    # print("new = {}".format(new_coordinates))
+    # print("C_3857 = {}".format(coordinates_3857))
+    y_range, x_range = zip(*coordinates_3857)
     x0, x1 = x_range
     y0, y1 = y_range
+    print("x_range = {}".format(x_range))
+    print("y_range = {}".format(y_range))
 
     # Build query expressions
     query_expr_xy = (
         f"(x_3857 >= {x0}) & (x_3857 <= {x1}) & (y_3857 >= {y0}) & (y_3857 <= {y1})"
     )
+    print(query_expr_xy)
     query_expr_range_created_parts = []
 
     # Build dataframe containing rows that satisfy the range and created selections
@@ -376,7 +389,7 @@ def update_plots(relayout_data):
 
     # Build dataframe containing rows of towers within the map viewport
     df_xy = df.query(query_expr_xy) if query_expr_xy else df
-
+    (print("df_xy = {}".format(df_xy.head())))
 
     cvs = ds.Canvas(plot_width=700, plot_height=400, x_range=x_range, y_range=y_range)
     agg = cvs.points(
