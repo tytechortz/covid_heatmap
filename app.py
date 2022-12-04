@@ -291,7 +291,7 @@ def update_plots(relayout_data):
     coordinates_4326 = relayout_data and relayout_data.get("mapbox._derived", {}).get(
         "coordinates", None
     )
-
+    print("coords_4326 = {}".format(coordinates_4326))
 
     data_3857 = [[df['x_3857'].min(), df['y_3857'].min()],
                 [df['x_3857'].max(), df['y_3857'].max()]]
@@ -299,10 +299,8 @@ def update_plots(relayout_data):
     
 
     data_center_3857 = [
-        [
             (data_3857[0][0] + data_3857[1][0]) / 2.0,
             (data_3857[0][1] + data_3857[1][1]) / 2.0,
-        ]
     ]
     print("dc3857={}".format(data_center_3857))
     # print(data_3857[0][0])
@@ -310,9 +308,9 @@ def update_plots(relayout_data):
     data_4326 = utm.to_latlon(data_3857[0][0], data_3857[0][1], 13, 'S'), utm.to_latlon(data_3857[1][0], data_3857[1][1],13, 'S')
     
     # print(data_4326)
-    print("this is {}".format(data_3857[0]))
-    print("that is {}".format(data_3857[1]))
-    data_center_4326 = [utm.to_latlon(data_3857[0][0], data_3857[0][1], 13, 'S')]
+    # print("this is {}".format(data_3857[0]))
+    # print("that is {}".format(data_3857[1]))
+    data_center_4326 = [utm.to_latlon(data_center_3857[0], data_center_3857[1], 13, 'S')]
     # data_center_4326 = [
     #     [
     #         (data_4326[0][0] + data_4326[1][0]) / 2.0,
@@ -320,6 +318,7 @@ def update_plots(relayout_data):
     #     ]
     # ]
     print("data 4326 - {}".format(data_4326))
+    print(data_center_4326)
 
     if coordinates_4326:
         lons, lats = zip(*coordinates_4326)
@@ -333,21 +332,23 @@ def update_plots(relayout_data):
         coordinates_3857 = epsg_4326_to_3857(coordinates_4326)
         # position = {}
         position = {
-            "zoom": relayout_data.get("mapbox.zoom", None),
-            "center": relayout_data.get("mapbox.center", None),
+            # "zoom": relayout_data.get("mapbox.zoom", None),
+            "zoom": 8,
+            # "center": relayout_data.get("mapbox.center", None),
+            "center": data_center_3857,
         }
     else:
         position = {
-            "zoom": 0.5,
+            "zoom": 8.5,
             "pitch": 0,
             "bearing": 0,
             "center": {"lon": data_center_4326[0][1], "lat": data_center_4326[0][0]},
         }
         coordinates_3857 = data_3857
         coordinates_4326 = data_4326
-        print("both-{}".format(coordinates_4326))
-        print("lat-{}".format(coordinates_4326[0][0]))
-        print("lon-{}".format(coordinates_4326[0][1]))
+        # print("both-{}".format(coordinates_4326))
+        # print("lat-{}".format(coordinates_4326[0][0]))
+        # print("lon-{}".format(coordinates_4326[0][1]))
 
     new_coordinates = [
         [coordinates_4326[0][0], coordinates_4326[1][1]],
