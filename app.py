@@ -305,11 +305,21 @@ def update_plots(relayout_data):
         ]
     ]
     print("dc3857={}".format(data_center_3857))
-    print(data_3857[0][0])
+    # print(data_3857[0][0])
 
-    data_4326 = [[utm.to_latlon(data_3857[0][0], data_3857[0][1],13, 'S')], [utm.to_latlon(data_3857[1][0], data_3857[1][1],13, 'S')]]
+    data_4326 = [[utm.to_latlon(data_3857[0][0], data_3857[0][1], 13, 'S')], [utm.to_latlon(data_3857[1][0], data_3857[1][1],13, 'S')]]
     
-    print(data_4326)
+    # print(data_4326)
+    print("this is {}".format(data_3857[0]))
+    print("that is {}".format(data_3857[1]))
+    data_center_4326 = [[utm.to_latlon(data_3857[0][0], data_3857[0][1], 13, 'S')]]
+    # data_center_4326 = [
+    #     [
+    #         (data_4326[0][0] + data_4326[1][0]) / 2.0,
+    #         (data_4326[0][1] + data_4326[1][1]) / 2.0,
+    #     ]
+    # ]
+    print(data_center_4326)
 
     if coordinates_4326:
         lons, lats = zip(*coordinates_4326)
