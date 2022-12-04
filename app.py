@@ -307,19 +307,19 @@ def update_plots(relayout_data):
     print("dc3857={}".format(data_center_3857))
     # print(data_3857[0][0])
 
-    data_4326 = [[utm.to_latlon(data_3857[0][0], data_3857[0][1], 13, 'S')], [utm.to_latlon(data_3857[1][0], data_3857[1][1],13, 'S')]]
+    data_4326 = utm.to_latlon(data_3857[0][0], data_3857[0][1], 13, 'S'), utm.to_latlon(data_3857[1][0], data_3857[1][1],13, 'S')
     
     # print(data_4326)
     print("this is {}".format(data_3857[0]))
     print("that is {}".format(data_3857[1]))
-    data_center_4326 = [[utm.to_latlon(data_3857[0][0], data_3857[0][1], 13, 'S')]]
+    data_center_4326 = [utm.to_latlon(data_3857[0][0], data_3857[0][1], 13, 'S')]
     # data_center_4326 = [
     #     [
     #         (data_4326[0][0] + data_4326[1][0]) / 2.0,
     #         (data_4326[0][1] + data_4326[1][1]) / 2.0,
     #     ]
     # ]
-    print(data_center_4326)
+    print("data 4326 - {}".format(data_4326))
 
     if coordinates_4326:
         lons, lats = zip(*coordinates_4326)
@@ -329,6 +329,7 @@ def update_plots(relayout_data):
             [lon0, lat0],
             [lon1, lat1],
         ]
+        print(coordinates_4326)
         coordinates_3857 = epsg_4326_to_3857(coordinates_4326)
         # position = {}
         position = {
@@ -340,10 +341,13 @@ def update_plots(relayout_data):
             "zoom": 0.5,
             "pitch": 0,
             "bearing": 0,
-            "center": {"lon": data_center_4326[0][0], "lat": data_center_4326[0][1]},
+            "center": {"lon": data_center_4326[0][1], "lat": data_center_4326[0][0]},
         }
         coordinates_3857 = data_3857
         coordinates_4326 = data_4326
+        print("both-{}".format(coordinates_4326))
+        print("lat-{}".format(coordinates_4326[0][0]))
+        print("lon-{}".format(coordinates_4326[0][1]))
 
     new_coordinates = [
         [coordinates_4326[0][0], coordinates_4326[1][1]],
