@@ -355,7 +355,7 @@ def update_plots(relayout_data):
         }
     else:
         position = {
-            "zoom": 8.5,
+            "zoom": 8,
             "pitch": 0,
             "bearing": 0,
             "center": {"lon": data_center_4326[0][1], "lat": data_center_4326[0][0]},
@@ -431,15 +431,23 @@ def update_plots(relayout_data):
         customdata = [None]
         marker = {}
         layers = []
-    else:
+    elif n_selected < 2000:
         print(n_selected)
         lat = df_xy['geolatitude']
         lon = df_xy['geolongitude']
         marker = {
             "color": "red",
-            "size": 5,
-            "cmin": 0,
-            "cmax": 3
+            "size": 2,
+            # "cmin": 0,
+            # "cmax": 3
+        }
+        layers = []
+    else:
+        lat = df_xy['geolatitude']
+        lon = df_xy['geolongitude']
+        marker = {
+            "color": "green",
+            "size": 3
         }
         layers = []
     
