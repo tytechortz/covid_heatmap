@@ -8,12 +8,20 @@ from dash.dependencies import Input, Output
 
 import dask
 
+import holoviews as hv
 import datashader as ds
-import datashader.transfer_functions as tf
+from holoviews.plotting.plotly.dash import to_dash
+from holoviews.operation.datashader import datashade
+from plotly.colors import sequential
+
 from datashader.colors import inferno, Hot
+
+import datashader.transfer_functions as tf
+
 import numpy as np
 import pandas as pd
 from distributed import Client
+
 
 from pyproj import Transformer, Proj
 import utm
@@ -295,14 +303,14 @@ def update_plots(relayout_data):
 
     data_3857 = [[df['y_3857'].min(), df['x_3857'].min()],
                 [df['y_3857'].max(), df['x_3857'].max()]]
-    print("d3857={}".format(data_3857))
+    # print("d3857={}".format(data_3857))
     
 
     data_center_3857 = [
             (data_3857[0][0] + data_3857[1][0]) / 2.0,
             (data_3857[0][1] + data_3857[1][1]) / 2.0,
     ]
-    print("dc3857={}".format(data_center_3857))
+    # print("dc3857={}".format(data_center_3857))
     # print(data_3857[0][0])
 
     data_4326 = utm.to_latlon(data_3857[0][1], data_3857[0][0], 13, 'S'), utm.to_latlon(data_3857[1][1], data_3857[1][0],13, 'S')
@@ -370,14 +378,14 @@ def update_plots(relayout_data):
     y_range, x_range = zip(*coordinates_3857)
     x0, x1 = x_range
     y0, y1 = y_range
-    print("x_range = {}".format(x_range))
-    print("y_range = {}".format(y_range))
+    # print("x_range = {}".format(x_range))
+    # print("y_range = {}".format(y_range))
 
     # Build query expressions
     query_expr_xy = (
         f"(x_3857 >= {x0}) & (x_3857 <= {x1}) & (y_3857 >= {y0}) & (y_3857 <= {y1})"
     )
-    print(query_expr_xy)
+    # print(query_expr_xy)
     query_expr_range_created_parts = []
 
     # Build dataframe containing rows that satisfy the range and created selections
@@ -389,7 +397,7 @@ def update_plots(relayout_data):
 
     # Build dataframe containing rows of towers within the map viewport
     df_xy = df.query(query_expr_xy) if query_expr_xy else df
-    (print("df_xy = {}".format(df_xy.head())))
+    # (print("df_xy = {}".format(df_xy.head())))
 
     cvs = ds.Canvas(plot_width=700, plot_height=400, x_range=x_range, y_range=y_range)
     agg = cvs.points(
@@ -414,76 +422,36 @@ def update_plots(relayout_data):
             "margin": {"l": 10, "r": 10, "t": 10, "b": 10},
         },
     }
+  
 
     if n_selected == 0:
         # Nothing to display
-        lat = [None]
-        lon = [None]
+        lat = []
+        lon = []
         customdata = [None]
         marker = {}
         layers = []
-    # elif n_selected < 5000:
-    #     # Display each individual point using a scattermapbox trace. This way we can
-    #     # give each individual point a tooltip
-    #     ddf_small_expr = " & ".join(
-    #         [query_expr_xy]
-    #         + [f"(radio in {selected_radio_categories})"]
-    #         + query_expr_range_created_parts
-    #     )
-    #     ddf_small = df.query(ddf_small_expr)
-    #     (
-    #         lat,
-    #         lon,
-    #         radio,
-    #         log10_range,
-    #         description,
-    #         mcc,
-    #         net,
-    #         created,
-    #         status,
-    #     ) = dask.compute(
-    #         ddf_small.lat,
-    #         ddf_small.lon,
-    #         ddf_small.radio,
-    #         ddf_small.log10_range,
-    #         ddf_small.Description,
-    #         ddf_small.mcc,
-    #         ddf_small.net,
-    #         ddf_small.created,
-    #         ddf_small.Status,
-    #     )
-
     else:
-        # Shade aggregation into an image that we can add to the map as a mapbox
-        # image layer
-        img = tf.shade(agg, cmap=Hot, min_alpha=100).to_pil()
-
-        # Resize image to map size to reduce image blurring on zoom.
-        img = img.resize((1400, 800))
-
-        # Add image as mapbox image layer. Note that as of version 4.4, plotly will
-        # automatically convert the PIL image object into a base64 encoded png string
-        layers = [
-            {"sourcetype": "image", "source": img, "coordinates": new_coordinates}
-        ]
-
-        # Do not display any mapbox markers
-        lat = [None]
-        lon = [None]
-        customdata = [None]
-        marker = {}
-
-
-
-    # Build map figure
+        print(n_selected)
+        lat = df_xy['geolatitude']
+        lon = df_xy['geolongitude']
+        marker = {
+            "color": "red",
+            "size": 5,
+            "cmin": 0,
+            "cmax": 3
+        }
+        layers = []
+    
+    print(lat)
     map_graph = {
         "data": [
             {
                 "type": "scattermapbox",
-                "lat": df.geolatitude,
-                "lon": df.geolongitude,
-                "customdata": customdata,
-                "marker": marker,
+                "lat": lat,
+                "lon": lon,
+                # "customdata": customdata,
+                "marker": marker
                 # "hovertemplate": (
                 #     "<b>%{customdata[2]}</b><br>"
                 #     "MCC: %{customdata[3]}<br>"
@@ -525,7 +493,7 @@ def update_plots(relayout_data):
             ],
         },
     }
-
+    
     map_graph["layout"]["mapbox"].update(position)
 
 
