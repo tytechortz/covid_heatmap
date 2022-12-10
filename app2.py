@@ -2,6 +2,8 @@ import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 
+from pyproj import Transformer
+
 import pandas as pd
 
 from textwrap import dedent
@@ -249,6 +251,17 @@ def update_plots(relayout_data):
     df = pd.read_csv('/Users/jamesswank/Desktop/TestingData_coordinates.csv')
     print(df)
 
+    trans = Transformer.from_crs(
+        "epsg:4326",
+        "+proj=utm +zone=13N +ellps=WGS84",
+        always_xy=True,
+    )
+    
+
+    x_3857,  y_3857 = trans.transform(df.geolongitude.values, df.geolatitude.values)
+    df = df.assign(x_3857=x_3857, y_3857=y_3857)
+    print(df)
+
     # y_range, x_range = zip(*coordinates_3857)
     # x0, x1 = x_range
     # y0, y1 = y_range
@@ -289,7 +302,7 @@ def update_plots(relayout_data):
 
     lat = df['geolatitude']
     lon = df['geolongitude']
-    print(lat)
+    
 
     marker = {
             "color": "red",
