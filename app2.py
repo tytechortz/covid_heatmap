@@ -9,6 +9,14 @@ import pandas as pd
 
 from textwrap import dedent
 
+import holoviews as hv
+from holoviews.operation.datashader import datashade
+from holoviews.plotting.plotly.dash import to_dash
+from holoviews.selection import link_selections
+
+from plotly import colors
+from plotly.colors import sequential
+
 
 
 # Colors
@@ -297,9 +305,11 @@ def update_plots(relayout_data):
     coordinates_4326 = data_4326
 
    
-    lat = df['geolatitude']
-    lon = df['geolongitude']
     
+
+
+    lat = []
+    lon = []
 
     marker = {
             "color": "red",
@@ -307,7 +317,17 @@ def update_plots(relayout_data):
             # "cmin": 0,
             # "cmax": 3
         }
-    layers = []
+
+    dataset = hv.Dataset(df)
+    points = hv.Points(
+    df, ["geolongitude", "geolatitude"]
+    ).opts(color="crimson")
+    tiles = hv.Tiles()
+    overlay = tiles * datashade(points, cmap=sequential.Plasma)
+    components = to_dash(app, [overlay], reset_button=True)
+    layers = [components.children]
+    
+    
 
     map_graph = {
         "data": [
@@ -316,7 +336,7 @@ def update_plots(relayout_data):
                 "lat": lat,
                 "lon": lon,
                 # "customdata": customdata,
-                "marker": marker
+                # "marker": marker
                 # "hovertemplate": (
                 #     "<b>%{customdata[2]}</b><br>"
                 #     "MCC: %{customdata[3]}<br>"
