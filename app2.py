@@ -3,6 +3,7 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 
 from pyproj import Transformer
+import utm
 
 import pandas as pd
 
@@ -249,7 +250,7 @@ def reset_map(*args):
 def update_plots(relayout_data):
 
     df = pd.read_csv('/Users/jamesswank/Desktop/TestingData_coordinates.csv')
-    print(df)
+    # print(df)
 
     trans = Transformer.from_crs(
         "epsg:4326",
@@ -260,46 +261,42 @@ def update_plots(relayout_data):
 
     x_3857,  y_3857 = trans.transform(df.geolongitude.values, df.geolatitude.values)
     df = df.assign(x_3857=x_3857, y_3857=y_3857)
-    print(df)
+    # print(df)
 
-    # y_range, x_range = zip(*coordinates_3857)
-    # x0, x1 = x_range
-    # y0, y1 = y_range
-    # print("x_range = {`
+    coordinates_4326 = relayout_data and relayout_data.get("mapbox._derived", {}).get(
+        "coordinates", None
+    )
 
-     # Build query expressions
-    # query_expr_xy = (
-    #     f"(x_3857 >= {x0}) & (x_3857 <= {x1}) & (y_3857 >= {y0}) & (y_3857 <= {y1})"
-    # )
 
-    # Build dataframe containing rows of tests within the map viewport
-    # df_xy = df.query(query_expr_xy) if query_expr_xy else df
-    # (print("df_xy = {}".format(df_xy.head())))
+    
 
-    # cvs = ds.Canvas(plot_width=700, plot_height=400)
-    # agg = cvs.points(
-    #     df_xy, x="geolongitude", y="geolatitude"
-    # )
+    data_3857 = [[df['y_3857'].min(), df['x_3857'].min()],
+                [df['y_3857'].max(), df['x_3857'].max()]]
 
-    # Count the number of selected tests
-    # n_selected = int(agg.sum())
+    data_4326 = utm.to_latlon(data_3857[0][1], data_3857[0][0], 13, 'N'), utm.to_latlon(data_3857[1][1], data_3857[1][0],13, 'N')
 
-    # Build indicator figure
-    # n_selected_indicator = {
-    #     "data": [
-    #         {
-    #             "type": "indicator",
-    #             "value": n_selected,
-    #             "number": {"font": {"color": "#263238"}},
-    #         }
-    #     ],
-    #     "layout": {
-    #         "template": template,
-    #         "height": 150,
-    #         "margin": {"l": 10, "r": 10, "t": 10, "b": 10},
-    #     },
-    # }
+    # print(data_4326)
 
+    data_center_3857 = [
+            (data_3857[0][0] + data_3857[1][0]) / 2.0,
+            (data_3857[0][1] + data_3857[1][1]) / 2.0,
+    ]
+
+    data_center_4326 = [utm.to_latlon(data_center_3857[1], data_center_3857[0], 13, 'N')]
+
+    print(data_center_4326)
+    position = {
+            "zoom": 8,
+            "pitch": 0,
+            "bearing": 0,
+            "center": {"lon": data_center_4326[0][1], "lat": data_center_4326[0][0]},
+        }
+
+
+    coordinates_3857 = data_3857
+    coordinates_4326 = data_4326
+
+   
     lat = df['geolatitude']
     lon = df['geolongitude']
     
@@ -362,7 +359,7 @@ def update_plots(relayout_data):
         },
     }
     
-    map_graph["layout"]["mapbox"]
+    map_graph["layout"]["mapbox"].update(position)
 
 
 
