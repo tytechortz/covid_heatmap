@@ -1,51 +1,12 @@
-import os
-import time
-from textwrap import dedent
-
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 
-import dask
-
-import holoviews as hv
-import datashader as ds
-from holoviews.plotting.plotly.dash import to_dash
-from holoviews.operation.datashader import datashade
-from plotly.colors import sequential
-
-from datashader.colors import inferno, Hot
-
-import datashader.transfer_functions as tf
-from colorcet import fire
-
-import numpy as np
 import pandas as pd
-from distributed import Client
+
+from textwrap import dedent
 
 
-from pyproj import Transformer, Proj
-import utm
-
-from utils import (
-    # compute_range_created_radio_hist,
-    epsg_4326_to_3857,
-    get_dataset,
-    scheduler_url,
-)
-
-# Global initialization
-client = None
-
-def init_client():
-    """
-    This function must be called before any of the functions that require a client.
-    """
-    global client
-    # Init client
-    print(f"Connecting to cluster at {scheduler_url} ... ", end="")
-    client = Client(scheduler_url)
-    print("done")
 
 # Colors
 bgcolor = "#f3f3f1"  # mapbox light map land color
@@ -68,8 +29,10 @@ def blank_fig(height):
         },
     }
 
+
 # Load mapbox token
 mapbox_access_token = open(".mapbox_token").read()
+
 
 def build_modal_info_overlay(id, side, content):
     """
@@ -108,7 +71,6 @@ def build_modal_info_overlay(id, side, content):
     )
 
     return div
-
 
 # Build Dash layout
 app = dash.Dash(__name__)
@@ -268,6 +230,7 @@ for id in ["indicator", "placeholder", "map"]:
             return {"display": "none"}, {"zIndex": 0}
 
 
+
 # Create clear/reset button callbacks
 @app.callback(
     Output("map-graph", "relayoutData"),
@@ -276,197 +239,66 @@ for id in ["indicator", "placeholder", "map"]:
 def reset_map(*args):
     return None
 
+
 @app.callback(
-    Output("indicator-graph", "figure"),
+    # Output("indicator-graph", "figure"),
     Output("map-graph", "figure"),
     Input("map-graph", "relayoutData"))
 def update_plots(relayout_data):
 
-    # test_df = get_dataset(client, "cell_towers_ddf")
     df = pd.read_csv('/Users/jamesswank/Desktop/TestingData_coordinates.csv')
-    df["tests"] = 1
+    print(df)
 
-    trans = Transformer.from_crs(
-        "epsg:4326",
-        "+proj=utm +zone=13N +ellps=WGS84",
-        always_xy=True,
-    )
-    
+    # y_range, x_range = zip(*coordinates_3857)
+    # x0, x1 = x_range
+    # y0, y1 = y_range
+    # print("x_range = {`
 
-    x_3857,  y_3857 = trans.transform(df.geolongitude.values, df.geolatitude.values)
-    df = df.assign(x_3857=x_3857, y_3857=y_3857)
-  
+     # Build query expressions
+    # query_expr_xy = (
+    #     f"(x_3857 >= {x0}) & (x_3857 <= {x1}) & (y_3857 >= {y0}) & (y_3857 <= {y1})"
+    # )
 
-    coordinates_4326 = relayout_data and relayout_data.get("mapbox._derived", {}).get(
-        "coordinates", None
-    )
-    # print("coords_4326 = {}".format(coordinates_4326))
+    # Build dataframe containing rows of tests within the map viewport
+    # df_xy = df.query(query_expr_xy) if query_expr_xy else df
+    # (print("df_xy = {}".format(df_xy.head())))
 
-    data_3857 = [[df['y_3857'].min(), df['x_3857'].min()],
-                [df['y_3857'].max(), df['x_3857'].max()]]
-    # print("d3857={}".format(data_3857))
-    
+    # cvs = ds.Canvas(plot_width=700, plot_height=400)
+    # agg = cvs.points(
+    #     df_xy, x="geolongitude", y="geolatitude"
+    # )
 
-    data_center_3857 = [
-            (data_3857[0][0] + data_3857[1][0]) / 2.0,
-            (data_3857[0][1] + data_3857[1][1]) / 2.0,
-    ]
-    # print("dc3857={}".format(data_center_3857))
-    # print(data_3857[0][0])
-
-    data_4326 = utm.to_latlon(data_3857[0][1], data_3857[0][0], 13, 'S'), utm.to_latlon(data_3857[1][1], data_3857[1][0],13, 'S')
-    
-    # print("DATA 4326 = {}".format(data_4326))
-    # print("this is {}".format(data_3857[0]))
-    # print("that is {}".format(data_3857[1]))
-    data_center_4326 = [utm.to_latlon(data_center_3857[1], data_center_3857[0], 13, 'S')]
-    # data_center_4326 = [
-    #     [
-    #         (data_4326[0][0] + data_4326[1][0]) / 2.0,
-    #         (data_4326[0][1] + data_4326[1][1]) / 2.0,
-    #     ]
-    # ]
-    print("data 4326 - {}".format(data_4326))
-    # print(data_center_4326)
-
-    if coordinates_4326:
-        lons, lats = zip(*coordinates_4326)
-        print("lons-{}".format(lons))
-        print("lats-{}".format(lats))
-        # print("data_4326 0 0 = {}".format(data_4326[0][0]))
-        lon0, lon1 = max(min(lons), data_4326[0][1]), min(max(lons), data_4326[1][1])
-        lat0, lat1 = max(min(lats), data_4326[0][0]), min(max(lats), data_4326[1][0])
-        # print("lon0 = {} lat0 = {}".format(lon0, lat0))
-        coordinates_4326 = [
-            [lat0, lon0],
-            [lat1, lon1],
-        ]
-        print("new_cords = {}".format(coordinates_4326))
-        # coordinates_3857 = epsg_4326_to_3857(coordinates_4326)
-        coordinates_3857 = utm.from_latlon(coordinates_4326[0][0], coordinates_4326[0][1]), utm.from_latlon(coordinates_4326[1][0], coordinates_4326[1][1])
-        coordinates_3857 = [[coordinates_3857[0][1], coordinates_3857[0][0]], [coordinates_3857[1][1], coordinates_3857[1][0]]]
-        # print("Right Here = {}".format(coordinates_3857))
-
-        # position = {}
-        position = {
-            "zoom": relayout_data.get("mapbox.zoom", None),
-            # "zoom": 8,
-            "center": relayout_data.get("mapbox.center", None),
-            # "center": data_center_3857,
-        }
-    else:
-        position = {
-            "zoom": 8,
-            "pitch": 0,
-            "bearing": 0,
-            "center": {"lon": data_center_4326[0][1], "lat": data_center_4326[0][0]},
-        }
-        coordinates_3857 = data_3857
-        coordinates_4326 = data_4326
-        print("both-{}".format(coordinates_4326))
-        # print("lat-{}".format(coordinates_4326[0][0]))
-        # print("lon-{}".format(coordinates_4326[0][1]))
-
-    new_coordinates = [
-        [coordinates_4326[0][0], coordinates_4326[1][1]],
-        [coordinates_4326[1][0], coordinates_4326[1][1]],
-        [coordinates_4326[1][0], coordinates_4326[0][1]],
-        [coordinates_4326[0][0], coordinates_4326[0][1]],
-    ]
-
-    # print("new = {}".format(new_coordinates))
-    # print("C_3857 = {}".format(coordinates_3857))
-    y_range, x_range = zip(*coordinates_3857)
-    x0, x1 = x_range
-    y0, y1 = y_range
-    # print("x_range = {}".format(x_range))
-    # print("y_range = {}".format(y_range))
-
-    # Build query expressions
-    query_expr_xy = (
-        f"(x_3857 >= {x0}) & (x_3857 <= {x1}) & (y_3857 >= {y0}) & (y_3857 <= {y1})"
-    )
-    # print(query_expr_xy)
-    query_expr_range_created_parts = []
-
-    # Build dataframe containing rows that satisfy the range and created selections
-    # if query_expr_range_created_parts:
-    #     query_expr_range_created = " & ".join(query_expr_range_created_parts)
-    #     ddf_selected_range_created = df.query(query_expr_range_created)
-    # else:
-    #     ddf_selected_range_created = df
-
-    # print(ddf_selected_range_created)
-
-    # Build dataframe containing rows of towers within the map viewport
-    df_xy = df.query(query_expr_xy) if query_expr_xy else df
-    (print("df_xy = {}".format(df_xy.head())))
-
-    cvs = ds.Canvas(plot_width=700, plot_height=400)
-    agg = cvs.points(
-        df_xy, x="geolongitude", y="geolatitude"
-    )
-
-    # coords_lat, coords_lon = agg.coords['y_3857'].values, agg.coords['x_3857'].values
-
-    # Count the number of selected towers
-    n_selected = int(agg.sum())
+    # Count the number of selected tests
+    # n_selected = int(agg.sum())
 
     # Build indicator figure
-    n_selected_indicator = {
-        "data": [
-            {
-                "type": "indicator",
-                "value": n_selected,
-                "number": {"font": {"color": "#263238"}},
-            }
-        ],
-        "layout": {
-            "template": template,
-            "height": 150,
-            "margin": {"l": 10, "r": 10, "t": 10, "b": 10},
-        },
-    }
-  
+    # n_selected_indicator = {
+    #     "data": [
+    #         {
+    #             "type": "indicator",
+    #             "value": n_selected,
+    #             "number": {"font": {"color": "#263238"}},
+    #         }
+    #     ],
+    #     "layout": {
+    #         "template": template,
+    #         "height": 150,
+    #         "margin": {"l": 10, "r": 10, "t": 10, "b": 10},
+    #     },
+    # }
 
-    if n_selected == 0:
-        # Nothing to display
-        lat = []
-        lon = []
-        customdata = [None]
-        marker = {}
-        layers = []
-    elif n_selected < 32000:
-        print(n_selected)
-        lat = df_xy['geolatitude']
-        lon = df_xy['geolongitude']
-        marker = {
+    lat = df['geolatitude']
+    lon = df['geolongitude']
+    print(lat)
+
+    marker = {
             "color": "red",
             "size": 2,
             # "cmin": 0,
             # "cmax": 3
         }
-        layers = []
-    else:
-        print("hello")
-        # image layer
-        img = tf.shade(agg, cmap=fire).to_pil()
+    layers = []
 
-        # Resize image to map size to reduce image blurring on zoom.
-        img = img.resize((1400, 800))
-
-        layers = [
-            {"sourcetype": "image", "source": img, "coordinates": new_coordinates}
-        ]
-        print("Dees are new {}".format(new_coordinates))
-        # Do not display any mapbox markers
-        lat = [None]
-        lon = [None]
-        customdata = [None]
-        marker = {}
-
-    
-    # print(lat)
     map_graph = {
         "data": [
             {
@@ -517,13 +349,12 @@ def update_plots(relayout_data):
         },
     }
     
-    map_graph["layout"]["mapbox"].update(position)
+    map_graph["layout"]["mapbox"]
 
 
 
+    return map_graph
 
-
-    return n_selected_indicator, map_graph
 
 if __name__ == '__main__':
     app.run_server(port=8000,debug=True)
