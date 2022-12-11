@@ -6,9 +6,11 @@ import plotly.graph_objects as go
 import json
 import numpy as np
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc, html
+# import dash_html_components as html
 from dash.dependencies import Input, Output, State
+import plotly.express as px
+
 
 
 # Load mapbox token
@@ -21,22 +23,16 @@ app = dash.Dash(__name__)
 
 
 
-geodf = gpd.read_file('Census_Tracts_2020_SHAPE_UTM/Census_Tracts_2020_UTM.shp')
+geo_df = gpd.read_file('Census_Tracts_2020_SHAPE_UTM/Census_Tracts_2020_UTM.shp')
 # print(geodf)
 
-geodf = geodf.to_crs("WGS84")
+geo_df = geo_df.to_crs("WGS84")
+tracts = geo_df.to_json()
+# print(type(tracts))
+print(geo_df.columns.values)
+# print(geo_df)
+# print(tracts.keys())
 
-# fig = go.Figure(go.Choroplethmapbox(geojson = json.loads(geodf.to_json())
-# ))
-
-# fig.update_layout(mapbox_style="open-street-map",
-#                         height = 1000,
-#                         autosize=True,
-#                         margin={"r":0,"t":0,"l":0,"b":0},
-#                         paper_bgcolor='#303030',
-#                         plot_bgcolor='#303030',
-#                         mapbox=dict(center=dict(lat=39.1699, lon=-104.9384),zoom=9),
-                        # )
 
 
 app.layout = html.Div([
@@ -50,53 +46,46 @@ app.layout = html.Div([
         ),
     ]),
     dcc.Graph(id = 'ct'),
-    # fig
 ])
 
-# @app.callback(
-#     Output('CT')
-# )
-
 @app.callback(
-    Output('ct', 'figure'),
-    Input('years', 'value'))
-def update_figure(years):
+    Output("ct", "figure"),
+    Input("years", "value"))
+def update_map(years):
 
-    
-    # geodf = geodf.to_crs("WGS84")
-    print(geodf)
+    layers = [dict(sourcetype = "json",
+        source = json.loads(geo_df.geometry.to_json()),
 
-    df = geodf.to_json()
+    )]
+    print(layers[0])
 
-    print(df)
-    layers=[dict(sourcetype = 'json',
-        source = df,
-        below="water", 
-        type = 'fill',
-        # color = sources[k]['features'][0]['properties']['COLOR'],
-        opacity = 0.5),
-        ]
     data = [dict(
         lat = 39.5,
         lon = -104.5,
         # text = df_smr['name'],
-        hoverinfo = 'text',
+        # hoverinfo = 'text',
         type = 'scattermapbox',
         # customdata = df['uid'],
         # marker = dict(size=df_smr['marker_size'],color='forestgreen',opacity=.5),
         )]
-    layout = dict(
-            mapbox = dict(
-                accesstoken = mapbox_access_token,
-                center = dict(lat=39.05, lon=-105.5),
-                zoom = 5.85,
-                style = 'light',
-                layers = layers
-            ),
-            hovermode = 'closest',
-            height = 450,
-            margin = dict(r=0, l=0, t=0, b=0)
-            )
+
+    layout = {
+        "autosize": True,
+        "datarevision": 0,
+        "hovermode": "closest",
+        "mapbox": {
+            "accesstoken": mapbox_access_token,
+            "bearing": 0,
+            "center": {"lat": 39.6050991, "lon": -104.4052438},
+            "pitch": 0,
+            # "opacity": 0.2,
+            "zoom": 8,
+            "style": "open-street-map",
+            "layers": layers
+        },
+        "margin": {"r": 0, "t": 0, "l": 0, "b": 0, "pad": 0},
+    }
+
     fig = dict(data=data, layout=layout)
     return fig
 
@@ -104,5 +93,6 @@ def update_figure(years):
 
 
 
+
 if __name__ == '__main__':
-    app.run_server(port=8000,debug=True)
+    app.run_server(port=8080,debug=True)
