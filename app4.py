@@ -23,28 +23,10 @@ app = dash.Dash(__name__)
 
 
 
-
-
-
 geo_df = gpd.read_file('Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
 # print(geo_df)
 geo_df.to_file('tracts.geojson', driver="GeoJSON")
 print(geo_df.columns)
-# reader = shapefile.Reader('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
-# fields = reader.fields[1:]
-# field_names = [field[0] for field in fields]
-# buffer = []
-# for sr in reader.shapeRecords():
-#     atr = dict(zip(field_names, sr.record))
-#     geom = sr.shape.__geo_interface__
-#     buffer.append(dict(type="Feature", \
-#     geometry=geom, properties=atr)) 
-   
-#     # write the GeoJSON file
-   
-# geojson = open("pyshp-demo.json", "w")
-# geojson.write(dumps({"type": "FeatureCollection", "features": buffer}, indent=2) + "\n")
-# geojson.close()
 
 
 with open('pyshp-demo.json') as json_file:
@@ -55,7 +37,7 @@ sources=[]
 for feat in topoJSON['features']: 
         sources.append({"type": "FeatureCollection", 'features': [feat]})
 
-print(sources)
+# print(sources)
 
 app.layout = html.Div([
     html.H4("Here We Go"),
