@@ -10,6 +10,8 @@ from dash import dcc, html
 # import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import plotly.express as px
+import shapefile
+from json import dumps
 
 
 
@@ -23,17 +25,37 @@ app = dash.Dash(__name__)
 
 
 
-geo_df = gpd.read_file('Census_Tracts_2020_SHAPE_UTM/Census_Tracts_2020_UTM.shp')
-# print(geodf)
 
-geo_df = geo_df.to_crs("WGS84")
-tracts = geo_df.to_json()
-# print(type(tracts))
-print(geo_df.columns.values)
+geo_df = gpd.read_file('Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
 # print(geo_df)
-# print(tracts.keys())
+geo_df.to_file('tracts.geojson', driver="GeoJSON")
+print(geo_df.columns)
+# reader = shapefile.Reader('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
+# fields = reader.fields[1:]
+# field_names = [field[0] for field in fields]
+# buffer = []
+# for sr in reader.shapeRecords():
+#     atr = dict(zip(field_names, sr.record))
+#     geom = sr.shape.__geo_interface__
+#     buffer.append(dict(type="Feature", \
+#     geometry=geom, properties=atr)) 
+   
+#     # write the GeoJSON file
+   
+# geojson = open("pyshp-demo.json", "w")
+# geojson.write(dumps({"type": "FeatureCollection", "features": buffer}, indent=2) + "\n")
+# geojson.close()
 
 
+with open('pyshp-demo.json') as json_file:
+    jdata = json_file.read()
+    topoJSON = json.loads(jdata)
+
+sources=[]
+for feat in topoJSON['features']: 
+        sources.append({"type": "FeatureCollection", 'features': [feat]})
+
+print(sources)
 
 app.layout = html.Div([
     html.H4("Here We Go"),
@@ -53,11 +75,20 @@ app.layout = html.Div([
     Input("years", "value"))
 def update_map(years):
 
-    layers = [dict(sourcetype = "json",
-        source = json.loads(geo_df.geometry.to_json()),
+    def fill_color():
+        for k in range(len(sources)):
+            sources[k]['features'][0]['properties']['COLOR'] = 'lightgreen'
+                           
+    fill_color()
 
-    )]
-    print(layers[0])
+    layers=[dict(sourcetype = 'json',
+        source =sources[k],
+        below="water", 
+        type = 'fill',
+        color = sources[k]['features'][0]['properties']['COLOR'],
+        opacity = 0.5
+        ) for k in range(len(sources))] 
+    # print(layers[0])
 
     data = [dict(
         lat = 39.5,
@@ -66,6 +97,8 @@ def update_map(years):
         # hoverinfo = 'text',
         type = 'scattermapbox',
         # customdata = df['uid'],
+        mode = 'markers',
+        marker = dict(size=10, color='red')
         # marker = dict(size=df_smr['marker_size'],color='forestgreen',opacity=.5),
         )]
 
@@ -80,7 +113,7 @@ def update_map(years):
             "pitch": 0,
             # "opacity": 0.2,
             "zoom": 8,
-            "style": "open-street-map",
+            "style": "light",
             "layers": layers
         },
         "margin": {"r": 0, "t": 0, "l": 0, "b": 0, "pad": 0},
