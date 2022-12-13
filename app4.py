@@ -10,8 +10,9 @@ from dash import dcc, html
 # import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import plotly.express as px
-import shapefile
 from json import dumps
+from geopandas.tools import sjoin
+from shapely.geometry import Point
 
 
 
@@ -22,20 +23,40 @@ mapbox_access_token = open(".mapbox_token").read()
 app = dash.Dash(__name__)
 
 
+df = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
+# print(df)
+# print(type(df))
+df = df.set_geometry('geometry')
+# print(df.shape)
 
-geo_df = gpd.read_file('Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
-# print(geo_df)
-geo_df.to_file('tracts.geojson', driver="GeoJSON")
-print(geo_df.columns)
+pop = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
+pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
+pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
+pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
+pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
+pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
+
+# print(pop)
+df_combo = pd.merge(pop, df, on='TRACTCE20', how='inner')
+# print(type(df_combo))
+
+tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
+tests_gdf = gpd.GeoDataFrame(tests,
+    geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
+
+print(tests_gdf)
+
+# dfsjoin = gpd.sjoin(df_combo, tests)
+# print(dfsjoin)
 
 
-with open('pyshp-demo.json') as json_file:
-    jdata = json_file.read()
-    topoJSON = json.loads(jdata)
+# with open('combo.json') as json_file:
+#     jdata = json_file.read()
+#     topoJSON = json.loads(jdata)
 
-sources=[]
-for feat in topoJSON['features']: 
-        sources.append({"type": "FeatureCollection", 'features': [feat]})
+# sources=[]
+# for feat in df_combo['features']: 
+#         sources.append({"type": "FeatureCollection", 'features': [feat]})
 
 # print(sources)
 
@@ -65,10 +86,11 @@ def update_map(years):
 
     layers=[dict(sourcetype = 'json',
         source =sources[k],
-        below="water", 
+        # below="water", 
         type = 'fill',
         color = sources[k]['features'][0]['properties']['COLOR'],
-        opacity = 0.5
+        opacity = 0.1,
+        width = 10,
         ) for k in range(len(sources))] 
     # print(layers[0])
 
@@ -91,10 +113,10 @@ def update_map(years):
         "mapbox": {
             "accesstoken": mapbox_access_token,
             "bearing": 0,
-            "center": {"lat": 39.6050991, "lon": -104.4052438},
+            "center": {"lat": 39.65, "lon": -104.8},
             "pitch": 0,
             # "opacity": 0.2,
-            "zoom": 8,
+            "zoom": 10,
             "style": "light",
             "layers": layers
         },

@@ -5,15 +5,22 @@ from holoviews.plotting.plotly.dash import to_dash
 from holoviews.operation.datashader import datashade
 import pandas as pd
 import numpy as np
-from plotly.data import carshare
 import colorcet as cc
 from plotly.colors import sequential
 from pyproj import Transformer
 import utm
+import geopandas as gpd
 
 
 # Load mapbox token
 mapbox_access_token = open(".mapbox_token").read()
+
+# Build Dash layout
+app = dash.Dash(__name__)
+
+app.layout = html.Div([
+    html.H4("Here We Go")
+])
 
 
 df = pd.read_csv('/Users/jamesswank/Desktop/TestingData_coordinates.csv')
