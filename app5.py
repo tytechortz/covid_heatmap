@@ -70,6 +70,9 @@ color_map = { '1': '#20fc03',
 
 # pop = pop.set_index('TRACTCE20')
 # print(pop)
+
+factor = 0.9
+
 app.layout = html.Div([
     html.H4("Arapahoe County Testing"),
     html.Div([
@@ -102,7 +105,17 @@ def update_map(opacity):
                             # hover_name='Geography',
                             locations= 'TRACTCE20',
                             color='TpCap',
-                            color_continuous_scale="Viridis",
+                            color_continuous_scale = 
+                                [[0, 'rgb(166,206,227, 0.5)'],
+                                [0.05, 'rgb(31,120,180,0.5)'],
+                                [0.2, 'rgb(178,223,138,0.5)'],
+                                [0.5, 'rgb(51,160,44,0.5)'],
+                                [factor, 'rgb(251,154,153,0.5)'],
+                                [factor, 'rgb(227,26,28,0.5)'],
+                                [1, 'rgb(227,26,28,0.5)']
+                            ],
+                            labels = {'TpCap': 'Tests Per Capita'},
+                            # color_continuous_scale="Viridis",
                             # title="Census - " + topic,
                             # category_orders={'TOTALPOP':('1','2','3','4')},
                             # color_discrete_map=color_map,
