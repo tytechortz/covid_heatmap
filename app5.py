@@ -22,7 +22,7 @@ pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_20
 # pop = pop.set_index('TRACTCE20')
 print(pop)
 app.layout = html.Div([
-    html.H4("Here We Go"),
+    html.H4("Arapahoe County Testing"),
     html.Div([
         dcc.RangeSlider(
         id = 'years',
@@ -50,13 +50,13 @@ def update_map(years):
                             # category_orders={topic_str:('1','2','3','4')},
                             # color_discrete_map=color_map,
                             opacity=1,
-                            zoom=5.5,   
+                            zoom=10,   
                             center=dict(
-                                lat=46.560,
-                                lon=-66.112
+                                lat=39.66,
+                                lon=-104.85
                             ))
 
-    fig.update_layout(mapbox_style="carto-positron")
+    fig.update_layout(mapbox_style="carto-positron",margin={"r":0,"t":0,"l":0,"b":0})
 
     fig.update_layout(
         mapbox={'layers': [{
