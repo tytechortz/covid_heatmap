@@ -18,7 +18,7 @@ app = dash.Dash(__name__)
 gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
 gdf = gdf.to_crs("epsg:4326")
 gdf = gdf.set_geometry('geometry')
-print(gdf.columns)
+# print(gdf.columns)
 
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
@@ -28,13 +28,21 @@ pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
 pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
 pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
 
+# print(pop)
+# print(pop.columns)
+
+
+
+# df_combo.set_geometry('geometry')
+# print(df_combo.columns)
+
 df_tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
 
 
 df_tests = gpd.GeoDataFrame(df_tests, 
     geometry = gpd.points_from_xy(df_tests['geolongitude'], df_tests['geolatitude']))
 df_tests = df_tests.set_crs('epsg:4326')
-print(df_tests.columns)
+# print(df_tests.columns)
 
 tIT = sjoin(df_tests, gdf, how='inner')
 tIT = tIT.groupby('TRACTCE20').size().reset_index(name='count')
@@ -44,8 +52,11 @@ tIT = tIT.groupby('TRACTCE20').size().reset_index(name='count')
 # print(tIT)
 
 gdf = gdf.merge(tIT, on="TRACTCE20")
+# df_combo = gdf.merge(tIT, on="TRACTCE20")
+# print(gdf.columns)
+gdf = gdf.merge(pop, on='TRACTCE20')
+gdf['TpCap'] = gdf['count'] / gdf['TOTALPOP']
 print(gdf.columns)
-
 
 
 # print(pop.columns)
@@ -90,7 +101,7 @@ def update_map(opacity):
                             featureidkey='properties.TRACTCE20',
                             # hover_name='Geography',
                             locations= 'TRACTCE20',
-                            color='count',
+                            color='TpCap',
                             color_continuous_scale="Viridis",
                             # title="Census - " + topic,
                             # category_orders={'TOTALPOP':('1','2','3','4')},
