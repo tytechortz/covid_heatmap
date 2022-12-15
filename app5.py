@@ -7,6 +7,8 @@ import geopandas as gpd
 import plotly.express as px
 from dash.dependencies import Input, Output, State
 
+from geopandas.tools import sjoin
+
 # Load mapbox token
 mapbox_access_token = open(".mapbox_token").read()
 
@@ -16,9 +18,9 @@ app = dash.Dash(__name__)
 gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
 gdf = gdf.to_crs("epsg:4326")
 gdf = gdf.set_geometry('geometry')
-print(gdf)
-pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
+# print(gdf)
 
+pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
 pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
@@ -26,9 +28,28 @@ pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
 pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
 pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
 
-print(pop.columns)
-# df_combo = pd.merge(pop, gdf, on='TRACTCE20', how='outer')
+df_tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
 
+
+df_tests = gpd.GeoDataFrame(df_tests, 
+    geometry = gpd.points_from_xy(df_tests['geolongitude'], df_tests['geolatitude']))
+df_tests = df_tests.set_crs('epsg:4326')
+
+tIT = sjoin(df_tests, gdf, how='left')
+tIT = tIT.groupby('TRACTCE20').size().reset_index(name='count')
+
+
+# print(df_tests.columns)
+print(tIT)
+
+gdf = gdf.merge(tIT, on="TRACTCE20")
+print(gdf)
+
+
+
+# print(pop.columns)
+# df_combo = pd.merge(df_tests, gdf, on='TRACTCE20', how='outer')
+# print(df_combo(type))
 # defining colours
 color_map = { '1': '#20fc03',
               '2': '#f0fc03',
@@ -36,7 +57,7 @@ color_map = { '1': '#20fc03',
               '4': '#fc0303'}
 
 # pop = pop.set_index('TRACTCE20')
-print(pop)
+# print(pop)
 app.layout = html.Div([
     html.H4("Arapahoe County Testing"),
     html.Div([
@@ -56,16 +77,17 @@ app.layout = html.Div([
 def update_map(years):
     print(years)
 
-    fig = px.choropleth_mapbox(pop, 
+    fig = px.choropleth_mapbox(gdf, 
                             geojson=gdf.__geo_interface__,
                             featureidkey='properties.TRACTCE20',
                             # hover_name='Geography',
                             locations= 'TRACTCE20',
-                            color='TOTALPOP',
+                            color='count',
+                            color_continuous_scale="Viridis",
                             # title="Census - " + topic,
                             # category_orders={'TOTALPOP':('1','2','3','4')},
                             # color_discrete_map=color_map,
-                            opacity=1,
+                            opacity=0.3,
                             zoom=10,   
                             center=dict(
                                 lat=39.66,
