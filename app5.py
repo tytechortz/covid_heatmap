@@ -18,7 +18,7 @@ app = dash.Dash(__name__)
 gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
 gdf = gdf.to_crs("epsg:4326")
 gdf = gdf.set_geometry('geometry')
-# print(gdf)
+print(gdf.columns)
 
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
@@ -34,16 +34,17 @@ df_tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingD
 df_tests = gpd.GeoDataFrame(df_tests, 
     geometry = gpd.points_from_xy(df_tests['geolongitude'], df_tests['geolatitude']))
 df_tests = df_tests.set_crs('epsg:4326')
+print(df_tests.columns)
 
-tIT = sjoin(df_tests, gdf, how='left')
+tIT = sjoin(df_tests, gdf, how='inner')
 tIT = tIT.groupby('TRACTCE20').size().reset_index(name='count')
 
 
 # print(df_tests.columns)
-print(tIT)
+# print(tIT)
 
 gdf = gdf.merge(tIT, on="TRACTCE20")
-print(gdf)
+print(gdf.columns)
 
 
 
@@ -61,21 +62,28 @@ color_map = { '1': '#20fc03',
 app.layout = html.Div([
     html.H4("Arapahoe County Testing"),
     html.Div([
-        dcc.RangeSlider(
-        id = 'years',
-        min = 2020,
-        max = 2023,
-        # marks = {i for i in range(2020,2022)}
+        html.Div([
+            dcc.Slider(
+            id = 'opacity',
+            min = 0,
+            max = 1,
+            value = 1,
+            # marks = {i for i in range(2020,2022)}
+            ),
+        ],
+            className = 'four columns'
         ),
-    ]),
+    ],
+        className = 'row'
+    ),
     dcc.Graph(id = 'ct'),
 ])
 
 @app.callback(
     Output("ct", "figure"),
-    Input("years", "value"))
-def update_map(years):
-    print(years)
+    Input("opacity", "value"))
+def update_map(opacity):
+    print(opacity)
 
     fig = px.choropleth_mapbox(gdf, 
                             geojson=gdf.__geo_interface__,
@@ -87,7 +95,7 @@ def update_map(years):
                             # title="Census - " + topic,
                             # category_orders={'TOTALPOP':('1','2','3','4')},
                             # color_discrete_map=color_map,
-                            opacity=0.3,
+                            opacity=opacity,
                             zoom=10,   
                             center=dict(
                                 lat=39.66,
