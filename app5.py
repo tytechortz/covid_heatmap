@@ -19,6 +19,22 @@ gdf = gdf.set_geometry('geometry')
 print(gdf)
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 
+pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
+pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
+pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
+pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
+pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
+pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
+
+print(pop.columns)
+# df_combo = pd.merge(pop, gdf, on='TRACTCE20', how='outer')
+
+# defining colours
+color_map = { '1': '#20fc03',
+              '2': '#f0fc03',
+              '3': '#fcb103',
+              '4': '#fc0303'}
+
 # pop = pop.set_index('TRACTCE20')
 print(pop)
 app.layout = html.Div([
@@ -44,10 +60,10 @@ def update_map(years):
                             geojson=gdf.__geo_interface__,
                             featureidkey='properties.TRACTCE20',
                             # hover_name='Geography',
-                            # locations= 'TOTALPOP',
+                            locations= 'TRACTCE20',
                             color='TOTALPOP',
                             # title="Census - " + topic,
-                            # category_orders={topic_str:('1','2','3','4')},
+                            # category_orders={'TOTALPOP':('1','2','3','4')},
                             # color_discrete_map=color_map,
                             opacity=1,
                             zoom=10,   
