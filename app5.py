@@ -18,46 +18,68 @@ app = dash.Dash(__name__)
 gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
 gdf = gdf.to_crs("epsg:4326")
 gdf = gdf.set_geometry('geometry')
-# print(gdf.columns)
+print('GDF Shape = {}'.format(gdf.shape))
+print(gdf.columns)
+
 
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
 pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
 pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
-pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
-pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
+# pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
+# pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
 
 # print(pop)
-# print(pop.columns)
+pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
+print(pop.columns)
+# print(pop.shape)
+# print(type(pop))
 
+tract_gdf = gdf.merge(pop, on='TRACTCE20')
+print(tract_gdf.columns)
+print(type(tract_gdf))
+print(tract_gdf.shape)
 
 
 # df_combo.set_geometry('geometry')
 # print(df_combo.columns)
 
 df_tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
-
-
+# print('df_tests shape = {}'.format(df_tests.shape))
+print(df_tests.columns)
 df_tests = gpd.GeoDataFrame(df_tests, 
     geometry = gpd.points_from_xy(df_tests['geolongitude'], df_tests['geolatitude']))
 df_tests = df_tests.set_crs('epsg:4326')
-# print(df_tests.columns)
+# print('df_tests w/geometry shape = {}'.format(df_tests.shape))
 
-tIT = sjoin(df_tests, gdf, how='inner')
+tIT = sjoin(df_tests, gdf, how='left')
+
 tIT = tIT.groupby('TRACTCE20').size().reset_index(name='count')
+print(tIT)
+print('TIT columns = {}'.format(tIT.columns))
+print(type(tIT))
+# # tIT = tIT.groupby('TRACTCE20').size().reset_index()
 
+tract_df = tract_gdf.merge(tIT, on='TRACTCE20')
+tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
+print(tract_df)
+# # print(df_tests.columns)
+# print(tIT.columns)
+# print('tIT shape = {}'.format(tIT.shape))
 
-# print(df_tests.columns)
+# # gdf = gdf.merge(tIT, on="TRACTCE20")
+# # df_combo = gdf.merge(tIT, on="TRACTCE20")
+
+# # print(gdf.columns)
+# tIT = tIT.merge(pop, on='TRACTCE20')
+# # print(gdf)
+# tIT['TpCap'] = tIT['count'] / tIT['TOTALPOP']
+# print(tIT.columns)
 # print(tIT)
-
-gdf = gdf.merge(tIT, on="TRACTCE20")
-# df_combo = gdf.merge(tIT, on="TRACTCE20")
-# print(gdf.columns)
-gdf = gdf.merge(pop, on='TRACTCE20')
-gdf['TpCap'] = gdf['count'] / gdf['TOTALPOP']
-print(gdf.columns)
-
+# # gdf = gpd.GeoDataFrame(gdf, geometry='geometry_x')
+# print(type(gdf))
+# print(gdf.head())
 
 # print(pop.columns)
 # df_combo = pd.merge(df_tests, gdf, on='TRACTCE20', how='outer')
@@ -99,12 +121,12 @@ app.layout = html.Div([
 def update_map(opacity):
     print(opacity)
 
-    fig = px.choropleth_mapbox(gdf, 
-                            geojson=gdf.__geo_interface__,
+    fig = px.choropleth_mapbox(tract_df, 
+                            geojson=tract_df.__geo_interface__,
                             featureidkey='properties.TRACTCE20',
                             # hover_name='Geography',
                             locations= 'TRACTCE20',
-                            color='TpCap',
+                            color='TperCap',
                             color_continuous_scale = 
                                 [[0, 'rgb(166,206,227, 0.5)'],
                                 [0.05, 'rgb(31,120,180,0.5)'],
