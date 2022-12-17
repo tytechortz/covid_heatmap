@@ -11,6 +11,8 @@ from dash.dependencies import Input, Output, State
 
 from geopandas.tools import sjoin
 
+from textwrap import dedent
+
 # Load mapbox token
 mapbox_access_token = open(".mapbox_token").read()
 
@@ -33,11 +35,79 @@ pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 
 
 factor = 0.9
+# Colors
+bgcolor = "#f3f3f1"  # mapbox light map land color
 
+# Figure template
+row_heights = [150, 500, 300]
+template = {"layout": {"paper_bgcolor": bgcolor, "plot_bgcolor": bgcolor}}
 
+def blank_fig(height):
+    """
+    Build blank figure with the requested height
+    """
+    return {
+        "data": [],
+        "layout": {
+            "height": height,
+            "template": template,
+            "xaxis": {"visible": False},
+            "yaxis": {"visible": False},
+        },
+    }
+
+def build_modal_info_overlay(id, side, content):
+    """
+    Build div representing the info overlay for a plot panel
+    """
+    div = html.Div(
+        [  # modal div
+            html.Div(
+                [  # content div
+                    html.Div(
+                        [
+                            html.H4(
+                                [
+                                    "Info",
+                                    html.Img(
+                                        id=f"close-{id}-modal",
+                                        src="assets/times-circle-solid.svg",
+                                        n_clicks=0,
+                                        className="info-icon",
+                                        style={"margin": 0},
+                                    ),
+                                ],
+                                className="container_title",
+                                style={"color": "white"},
+                            ),
+                            dcc.Markdown(content),
+                        ]
+                    )
+                ],
+                className=f"modal-content {side}",
+            ),
+            html.Div(className="modal"),
+        ],
+        id=f"{id}-modal",
+        style={"display": "none"},
+    )
+
+    return div
 
 app.layout = html.Div([
-    html.H4("Arapahoe County Testing"),
+    html.Div([
+        html.H4([
+            "Arapahoe County Testing",
+            html.Img(
+                id="show-indicator-modal",
+                src="assets/question-circle-solid.svg",
+                n_clicks=0,
+                className="info-icon",
+            ),
+        ]),
+    ],
+        className="container_title",
+    ),
     html.Div([
         html.Div([
             dcc.Slider(
@@ -66,6 +136,16 @@ app.layout = html.Div([
         className = 'row'
     ),
     dcc.Graph(id = 'ct'),
+    dcc.Loading(
+        dcc.Graph(
+            id="indicator-graph",
+            figure=blank_fig(row_heights[0]),
+            config={"displayModeBar": False},
+        ),
+        className="svg-container",
+        style={"height": 150},
+    ),
+   
     dcc.Store(id='tests', storage_type='session'),
 
 ])
@@ -94,6 +174,7 @@ def get_tests(start_date, end_date):
 
 
 @app.callback(
+    Output("indicator-graph", "figure"),
     Output("ct", "figure"),
     Input("opacity", "value"),
     Input("tests", "data"))
@@ -154,7 +235,25 @@ def update_map(opacity, tests):
         }]}
     )
 
-    return fig
+    total_tests = tests.shape[0]
+
+    # Build indicator figure
+    n_selected_indicator = {
+        "data": [
+            {
+                "type": "indicator",
+                "value": total_tests,
+                "number": {"font": {"color": "#263238"}},
+            }
+        ],
+        "layout": {
+            "template": template,
+            "height": 150,
+            "margin": {"l": 10, "r": 10, "t": 10, "b": 10},
+        },
+    }
+
+    return n_selected_indicator, fig
 
 
 
