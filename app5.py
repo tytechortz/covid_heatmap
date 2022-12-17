@@ -83,8 +83,9 @@ app.layout = html.Div([
             id = 'dates',
             min_date_allowed=date(1995, 8, 5),
             max_date_allowed=date(2023, 1, 1),
-            initial_visible_month=date(2022, 12, 1),
-            end_date=date(2017, 8, 25)
+            start_date=date(2022, 10, 1),
+            initial_visible_month=date(2022, 10, 1),
+            end_date=date(2022, 12, 20)
             ),
         ],
             className = 'six columns'
@@ -104,6 +105,11 @@ app.layout = html.Div([
     Input('dates', 'end_date'))
 def get_tests(start_date, end_date):
     tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
+    print(tests)
+    print(start_date)
+    tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
+    tests = tests[(tests['CollectionDate'] > start_date) & (tests['CollectionDate'] < end_date)]
+
     # print('df_tests shape = {}'.format(df_tests.shape))
     # print(tests.columns)
     # tests = gpd.GeoDataFrame(tests, 
