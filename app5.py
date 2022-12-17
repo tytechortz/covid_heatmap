@@ -5,6 +5,7 @@ from datetime import date
 import numpy as np
 import pandas as pd 
 import geopandas as gpd
+from geopandas import GeoDataFrame
 import plotly.express as px
 from dash.dependencies import Input, Output, State
 
@@ -17,7 +18,15 @@ mapbox_access_token = open(".mapbox_token").read()
 app = dash.Dash(__name__)
 
 
-# print(pop)
+gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
+gdf = gdf.to_crs("epsg:4326")
+gdf = gdf.set_geometry('geometry')
+# print(gdf)
+
+
+
+    # print('GDF Shape = {}'.format(gdf.shape))
+    # print(gdf.columns)# print(pop)
 # pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 # print(pop.columns)
 
@@ -76,57 +85,76 @@ app.layout = html.Div([
         className = 'row'
     ),
     dcc.Graph(id = 'ct'),
-    dcc.Store(id='census-tracts', storage_type='session'),
     dcc.Store(id='pop', storage_type='session'),
     dcc.Store(id='tests', storage_type='session'),
+    dcc.Store(id='pop-tests', storage_type='session'),
 ])
 
-@app.callback(
-    Output('census-tracts', 'data'),
-    Input('dates', 'value' ))
-def get_tracts(dates):
-    gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
-    gdf = gdf.to_crs("epsg:4326")
-    gdf = gdf.set_geometry('geometry')
-    print('GDF Shape = {}'.format(gdf.shape))
-    print(gdf.columns)
-    return gdf.to_json
 
 @app.callback(
     Output('pop', 'data'),
-    Input('dates', 'value' ))
-def get_pop(dates):
+    Input('dates', 'start_date'),
+    Input('dates', 'end_date'))
+def get_pop(start_date, end_date):
     pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
     pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
     pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
     pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
     pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
     pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
-    
-    return pop.to_json
+    pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
+
+    return pop.to_json()
 
 @app.callback(
     Output('tests', 'data'),
-    Input('dates', 'value' ))
-def get_tests(dates):
+    Input('dates', 'start_date'),
+    Input('dates', 'end_date'))
+def get_tests(start_date, end_date):
     tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
     # print('df_tests shape = {}'.format(df_tests.shape))
-    print(tests.columns)
-    tests = gpd.GeoDataFrame(tests, 
-    geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
-    tests = tests.set_crs('epsg:4326')
+    # print(tests.columns)
+    # tests = gpd.GeoDataFrame(tests, 
+    # geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
+    # tests = tests.set_crs('epsg:4326')
     # print('df_tests w/geometry shape = {}'.format(df_tests.shape))
     
-    return tests.to_json
+    return tests.to_json()
+
+@app.callback(
+    Output('pop-tests', 'data'),
+    Input('dates', 'start_date'),
+    Input('dates', 'end_date'),
+    Input('pop', 'data'),
+    Input('tests', 'data'))
+def get_tracts_df(start_date, end_date, pop, tests):
+    print(start_date)
+    
+    
 
 
+    df_tests = pd.read_json(tests)
+    # print(df_pop)
+    # df_ct = pd.read_json(tracts)
+    # print(df_ct)
+    # print(type(df_ct))
+    # df_ct = GeoDataFrame(df_ct, crs='EPSG:4326', geometry=df_ct.geometry)
+    # print(type(df_ct))
+    # return pop_tests.to_json()
+
+    return(print('Yo'))
 
 
 
 @app.callback(
     Output("ct", "figure"),
-    Input("opacity", "value"))
-def update_map(opacity):
+    Input("opacity", "value"),
+    Input("pop", "data"))
+def update_map(opacity, pop):
+    df_pop = pd.read_json(pop)
+
+    tract_df = gdf.merge(pop, on='TRACTCE20')
+
     print(opacity)
 
     fig = px.choropleth_mapbox(tract_df, 
