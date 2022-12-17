@@ -78,15 +78,15 @@ app.layout = html.Div([
             className = 'four columns'
         ),
         html.Div([
-            dcc.DateRangePicker(
+            dcc.DatePickerRange(
             id = 'dates',
             min_date_allowed=date(1995, 8, 5),
-            max_date_allowed=date(2017, 9, 19),
-            initial_visible_month=date(2017, 8, 5),
+            max_date_allowed=date(2023, 1, 1),
+            initial_visible_month=date(2022, 12, 1),
             end_date=date(2017, 8, 25)
                 ),
         ],
-            className = 'four columns'
+            className = 'six columns'
         ),
     ],
         className = 'row'
