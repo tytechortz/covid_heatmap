@@ -445,13 +445,15 @@ def display_bubble_graph(tests):
     print(df_T)
     # tract_df = tract_gdf.merge(tITs, on='TRACTCE20')
     # tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
-    # df_T['cumSum'] = 
+    df_T['cumSum_count'] = df_T.groupby(['TRACTCE20'])['count'].cumsum()
+    # df_T['cumSum_count'] = df_T['count'].cumsum()
+    print(df_T.columns)
     # print(tract_df.columns)
     animations = {
         'GDP - Scatter': px.scatter(
-            df_T, x="cumSum", y="count", animation_frame="CollectionDate", 
+            df_T, x="cumSum_count", y="count", animation_frame="CollectionDate", 
             animation_group="TRACTCE20", size="TOTALPOP", color="TRACTCE20", 
-            hover_name="TRACTCE20", log_x=True, size_max=55, 
+            hover_name="TRACTCE20", log_x=False, size_max=55, 
             range_x=[100,100000], range_y=[25,90]),
         # 'Population - Bar': px.bar(
         #     tests, x="continent", y="pop", color="continent", 
