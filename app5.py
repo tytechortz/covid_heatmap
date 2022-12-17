@@ -256,7 +256,7 @@ app.layout = html.Div([
         html.H4([
             "Census Tracts",
             html.Img(
-                id="show-map-modal",
+                id="show-map-modal-2",
                 src="assets/question-circle-solid.svg",
                 className="info-icon",
             ),
@@ -264,7 +264,7 @@ app.layout = html.Div([
             className="container_title",
         ),
         dcc.Graph(
-            id="bubble",
+            id="bubble-graph",
             figure=blank_fig(row_heights[1]),
             config={"displayModeBar": False},
         ),
@@ -291,8 +291,8 @@ def get_tests(start_date, end_date):
     # print(start_date)
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
     tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
-    print(tests['CollectionDate'].min())
-    print(tests['CollectionDate'].max())
+    # print(tests['CollectionDate'].min())
+    # print(tests['CollectionDate'].max())
     # print('df_tests shape = {}'.format(df_tests.shape))
     # print(tests.columns)
     # tests = gpd.GeoDataFrame(tests, 
@@ -325,10 +325,10 @@ def update_map(opacity, zoom, tests):
 
     tIT = sjoin(tests, tract_gdf, how='left')
     tITs = tIT.groupby('TRACTCE20').size().reset_index(name='count')
-    print(tIT.columns)
+    # print(tIT.columns)
     tract_df = tract_gdf.merge(tITs, on='TRACTCE20')
     tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
-    print(tract_df)
+    # print(tract_df)
 
     fig = px.choropleth_mapbox(tract_df, 
                             geojson=tract_df.__geo_interface__,
@@ -413,7 +413,53 @@ def update_indicator(tests):
 
     return n_selected_indicator
 
+@app.callback(
+    Output("bubble-graph", "figure"),
+    Input("tests", "data"))
+def display_bubble_graph(tests):
+    tests = pd.read_json(tests)
+    # tests = gpd.GeoDataFrame(tests, 
+    #     geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
+    # tests = tests.set_crs('epsg:4326')
+    
+    gdf['TRACTCE20'].astype(str)
+   
+    tract_gdf = gdf.merge(pop, on='TRACTCE20')
 
+    tests = gpd.GeoDataFrame(tests, 
+        geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
+    tests = tests.set_crs('epsg:4326')
+
+    # print(tests)
+
+    # gdf['TRACTCE20'].astype(str)
+   
+    # tract_gdf = gdf.merge(pop, on='TRACTCE20')
+
+    tIT = sjoin(tests, tract_gdf, how='left')
+    tITs = tIT.groupby('TRACTCE20').size().reset_index(name='count')
+    print(type(tITs))
+    print(tIT.columns)
+    df_T = tIT.merge(tITs, on='TRACTCE20')
+    df_T.sort_values(by='CollectionDate', inplace=True)
+    print(df_T)
+    # tract_df = tract_gdf.merge(tITs, on='TRACTCE20')
+    # tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
+    # df_T['cumSum'] = 
+    # print(tract_df.columns)
+    animations = {
+        'GDP - Scatter': px.scatter(
+            df_T, x="cumSum", y="count", animation_frame="CollectionDate", 
+            animation_group="TRACTCE20", size="TOTALPOP", color="TRACTCE20", 
+            hover_name="TRACTCE20", log_x=True, size_max=55, 
+            range_x=[100,100000], range_y=[25,90]),
+        # 'Population - Bar': px.bar(
+        #     tests, x="continent", y="pop", color="continent", 
+        #     animation_frame="year", animation_group="country", 
+        #     range_y=[0,4000000000]),
+    }
+
+    return animations['GDP - Scatter']
 
 if __name__ == '__main__':
     app.run_server(port=8080,debug=True)
