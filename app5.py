@@ -147,14 +147,59 @@ app.layout = html.Div([
         className = 'row'
     ),
     dcc.Graph(id = 'ct'),
-    dcc.Loading(
-        dcc.Graph(
-            id="indicator-graph",
-            figure=blank_fig(row_heights[0]),
-            config={"displayModeBar": False},
+    html.Div([
+        html.Div([
+            html.H4([
+                "Selected Tests",
+                html.Img(
+                    id="show-indicator-modal",
+                    src="assets/question-circle-solid.svg",
+                    n_clicks=0,
+                    className="info-icon",
+                ),
+            ]),
+        ],
+            className="container_title",
         ),
-        className="svg-container",
-        style={"height": 150},
+        dcc.Loading(
+            dcc.Graph(
+                id="indicator-graph",
+                figure=blank_fig(row_heights[0]),
+                config={"displayModeBar": False},
+            ),
+            className="svg-container",
+            style={"height": 150},
+        ),
+    ],
+        className="six columns pretty_container",
+        id="indicator-div",
+    ),
+    html.Div([
+        html.Div([
+            html.H4([
+                "Placeholder",
+                html.Img(
+                    id="show-placeholder-modal",
+                    src="assets/question-circle-solid.svg",
+                    n_clicks=0,
+                    className="info-icon",
+                ),
+            ]),
+        ],
+            className="container_title",
+        ),
+        dcc.Loading(
+            dcc.Graph(
+                id="placeholder-graph",
+                figure=blank_fig(row_heights[0]),
+                config={"displayModeBar": False},
+            ),
+            className="svg-container",
+            style={"height": 150},
+        ),
+    ],
+        className="six columns pretty_container",
+        id="placeholder-div",
     ),
    
     dcc.Store(id='tests', storage_type='session'),
