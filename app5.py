@@ -29,40 +29,12 @@ pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
 pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
 pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
 pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
-# print(gdf)
 
-
-
-    # print('GDF Shape = {}'.format(gdf.shape))
-    # print(gdf.columns)# print(pop)
-# pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
-# print(pop.columns)
-
-
-# tract_gdf = gdf.merge(pop, on='TRACTCE20')
-# print(tract_gdf.columns)
-# print(type(tract_gdf))
-# print(tract_gdf.shape)
-
-
-
-
-
-
-# tIT = sjoin(df_tests, gdf, how='left')
-
-# tIT = tIT.groupby('TRACTCE20').size().reset_index(name='count')
-# print(tIT)
-# print('TIT columns = {}'.format(tIT.columns))
-# print(type(tIT))
-
-
-# tract_df = tract_gdf.merge(tIT, on='TRACTCE20')
-# tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
-# print(tract_df)
 
 
 factor = 0.9
+
+
 
 app.layout = html.Div([
     html.H4("Arapahoe County Testing"),
