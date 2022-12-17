@@ -1,5 +1,6 @@
 import dash
 from dash import dcc, html
+from datetime import date
 
 import numpy as np
 import pandas as pd 
@@ -15,83 +16,50 @@ mapbox_access_token = open(".mapbox_token").read()
 # Build Dash layout
 app = dash.Dash(__name__)
 
-gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
-gdf = gdf.to_crs("epsg:4326")
-gdf = gdf.set_geometry('geometry')
-print('GDF Shape = {}'.format(gdf.shape))
-print(gdf.columns)
 
 
-pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
-pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
-pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
-pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
-pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
+
+# pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
+# pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
+# pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
+# pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
+# pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
 # pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
 # pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
 
 # print(pop)
-pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
-print(pop.columns)
-# print(pop.shape)
-# print(type(pop))
-
-tract_gdf = gdf.merge(pop, on='TRACTCE20')
-print(tract_gdf.columns)
-print(type(tract_gdf))
-print(tract_gdf.shape)
-
-
-# df_combo.set_geometry('geometry')
-# print(df_combo.columns)
-
-df_tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
-# print('df_tests shape = {}'.format(df_tests.shape))
-print(df_tests.columns)
-df_tests = gpd.GeoDataFrame(df_tests, 
-    geometry = gpd.points_from_xy(df_tests['geolongitude'], df_tests['geolatitude']))
-df_tests = df_tests.set_crs('epsg:4326')
-# print('df_tests w/geometry shape = {}'.format(df_tests.shape))
-
-tIT = sjoin(df_tests, gdf, how='left')
-
-tIT = tIT.groupby('TRACTCE20').size().reset_index(name='count')
-print(tIT)
-print('TIT columns = {}'.format(tIT.columns))
-print(type(tIT))
-# # tIT = tIT.groupby('TRACTCE20').size().reset_index()
-
-tract_df = tract_gdf.merge(tIT, on='TRACTCE20')
-tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
-print(tract_df)
-# # print(df_tests.columns)
-# print(tIT.columns)
-# print('tIT shape = {}'.format(tIT.shape))
-
-# # gdf = gdf.merge(tIT, on="TRACTCE20")
-# # df_combo = gdf.merge(tIT, on="TRACTCE20")
-
-# # print(gdf.columns)
-# tIT = tIT.merge(pop, on='TRACTCE20')
-# # print(gdf)
-# tIT['TpCap'] = tIT['count'] / tIT['TOTALPOP']
-# print(tIT.columns)
-# print(tIT)
-# # gdf = gpd.GeoDataFrame(gdf, geometry='geometry_x')
-# print(type(gdf))
-# print(gdf.head())
-
+# pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 # print(pop.columns)
-# df_combo = pd.merge(df_tests, gdf, on='TRACTCE20', how='outer')
-# print(df_combo(type))
-# defining colours
-color_map = { '1': '#20fc03',
-              '2': '#f0fc03',
-              '3': '#fcb103',
-              '4': '#fc0303'}
 
-# pop = pop.set_index('TRACTCE20')
-# print(pop)
+
+# tract_gdf = gdf.merge(pop, on='TRACTCE20')
+# print(tract_gdf.columns)
+# print(type(tract_gdf))
+# print(tract_gdf.shape)
+
+
+
+
+# df_tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
+# # print('df_tests shape = {}'.format(df_tests.shape))
+# print(df_tests.columns)
+# df_tests = gpd.GeoDataFrame(df_tests, 
+#     geometry = gpd.points_from_xy(df_tests['geolongitude'], df_tests['geolatitude']))
+# df_tests = df_tests.set_crs('epsg:4326')
+# # print('df_tests w/geometry shape = {}'.format(df_tests.shape))
+
+# tIT = sjoin(df_tests, gdf, how='left')
+
+# tIT = tIT.groupby('TRACTCE20').size().reset_index(name='count')
+# print(tIT)
+# print('TIT columns = {}'.format(tIT.columns))
+# print(type(tIT))
+
+
+# tract_df = tract_gdf.merge(tIT, on='TRACTCE20')
+# tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
+# print(tract_df)
+
 
 factor = 0.9
 
@@ -109,11 +77,36 @@ app.layout = html.Div([
         ],
             className = 'four columns'
         ),
+        html.Div([
+            dcc.DateRangePicker(
+            id = 'dates',
+            min_date_allowed=date(1995, 8, 5),
+            max_date_allowed=date(2017, 9, 19),
+            initial_visible_month=date(2017, 8, 5),
+            end_date=date(2017, 8, 25)
+                ),
+        ],
+            className = 'four columns'
+        ),
     ],
         className = 'row'
     ),
     dcc.Graph(id = 'ct'),
+    dcc.Store(id='census-tracts', storage_type='session'),
 ])
+
+@app.callback(
+    Output('census-tracts', 'data'),
+    Input('dates', 'value' ))
+def get_tracts(years):
+    gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
+    gdf = gdf.to_crs("epsg:4326")
+    gdf = gdf.set_geometry('geometry')
+    print('GDF Shape = {}'.format(gdf.shape))
+    print(gdf.columns)
+    return gdf.to_json
+
+
 
 @app.callback(
     Output("ct", "figure"),
