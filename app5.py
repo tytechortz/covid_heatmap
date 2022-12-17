@@ -146,11 +146,35 @@ app.layout = html.Div([
     ],
         className = 'row'
     ),
-    dcc.Graph(id = 'ct'),
+    # dcc.Graph(id = 'ct'),
+    html.Div([
+        html.H4([
+            "Locations",
+            html.Img(
+                id="show-map-modal",
+                src="assets/question-circle-solid.svg",
+                className="info-icon",
+            ),
+        ],
+            className="container_title",
+        ),
+        dcc.Graph(
+            id="ct",
+            figure=blank_fig(row_heights[1]),
+            config={"displayModeBar": False},
+        ),
+    ],
+        className="twelve columns pretty_container",
+        style={
+            "width": "98%",
+            "margin-right": "0",
+        },
+        id="map-div",
+    ),
     html.Div([
         html.Div([
             html.H4([
-                "Selected Tests",
+                "Test Count",
                 html.Img(
                     id="show-indicator-modal",
                     src="assets/question-circle-solid.svg",
