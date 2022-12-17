@@ -252,7 +252,30 @@ app.layout = html.Div([
         className="four columns pretty_container",
         id="placeholder-div-2",
     ),
-   
+    html.Div([
+        html.H4([
+            "Census Tracts",
+            html.Img(
+                id="show-map-modal",
+                src="assets/question-circle-solid.svg",
+                className="info-icon",
+            ),
+        ],
+            className="container_title",
+        ),
+        dcc.Graph(
+            id="bubble",
+            figure=blank_fig(row_heights[1]),
+            config={"displayModeBar": False},
+        ),
+    ],
+        className="twelve columns pretty_container",
+        style={
+            "width": "98%",
+            "margin-right": "0",
+        },
+        id="bubble-div",
+    ),
     dcc.Store(id='tests', storage_type='session'),
 
 ])
@@ -301,11 +324,11 @@ def update_map(opacity, zoom, tests):
     tests = tests.set_crs('epsg:4326')
 
     tIT = sjoin(tests, tract_gdf, how='left')
-    tIT = tIT.groupby('TRACTCE20').size().reset_index(name='count')
-  
-    tract_df = tract_gdf.merge(tIT, on='TRACTCE20')
+    tITs = tIT.groupby('TRACTCE20').size().reset_index(name='count')
+    print(tIT.columns)
+    tract_df = tract_gdf.merge(tITs, on='TRACTCE20')
     tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
-
+    print(tract_df)
 
     fig = px.choropleth_mapbox(tract_df, 
                             geojson=tract_df.__geo_interface__,
@@ -369,7 +392,7 @@ def update_map(opacity, zoom, tests):
     Input("tests", "data"))
 def update_indicator(tests):
     tests = pd.read_json(tests)
-    print(tests)
+    # print(tests)
 
     total_tests = tests.shape[0]
     # Build indicator figure
