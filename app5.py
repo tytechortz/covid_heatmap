@@ -21,11 +21,7 @@ app = dash.Dash(__name__)
 
 # pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 # pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
-# pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
-# pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
-# pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
-# pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
-# pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
+# 
 
 # print(pop)
 # pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
@@ -84,7 +80,7 @@ app.layout = html.Div([
             max_date_allowed=date(2023, 1, 1),
             initial_visible_month=date(2022, 12, 1),
             end_date=date(2017, 8, 25)
-                ),
+            ),
         ],
             className = 'six columns'
         ),
@@ -93,18 +89,34 @@ app.layout = html.Div([
     ),
     dcc.Graph(id = 'ct'),
     dcc.Store(id='census-tracts', storage_type='session'),
+    dcc.Store(id='pop', storage_type='session'),
 ])
 
 @app.callback(
     Output('census-tracts', 'data'),
     Input('dates', 'value' ))
-def get_tracts(years):
+def get_tracts(dates):
     gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
     gdf = gdf.to_crs("epsg:4326")
     gdf = gdf.set_geometry('geometry')
     print('GDF Shape = {}'.format(gdf.shape))
     print(gdf.columns)
     return gdf.to_json
+
+@app.callback(
+    Output('pop', 'data'),
+    Input('dates', 'value' ))
+def get_pop(dates):
+    pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
+    pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
+    pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
+    pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
+    pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
+    pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
+    
+    return pop.to_json
+
+
 
 
 
