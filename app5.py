@@ -125,7 +125,7 @@ app.layout = html.Div([
             id = 'dates',
             min_date_allowed=date(1995, 8, 5),
             max_date_allowed=date(2023, 1, 1),
-            start_date=date(2022, 10, 27),
+            start_date=date(2022, 10, 25),
             initial_visible_month=date(2022, 10, 1),
             end_date=date(2022, 12, 20)
             ),
@@ -168,11 +168,12 @@ app.layout = html.Div([
     Input('dates', 'end_date'))
 def get_tests(start_date, end_date):
     tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
-    print(tests)
-    print(start_date)
+    # print(tests)
+    # print(start_date)
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
-    tests = tests[(tests['CollectionDate'] > start_date) & (tests['CollectionDate'] < end_date)]
-
+    tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] <= end_date)]
+    print(tests['CollectionDate'].min())
+    print(tests['CollectionDate'].max())
     # print('df_tests shape = {}'.format(df_tests.shape))
     # print(tests.columns)
     # tests = gpd.GeoDataFrame(tests, 
@@ -180,7 +181,7 @@ def get_tests(start_date, end_date):
     # tests = tests.set_crs('epsg:4326')
     # print('df_tests w/geometry shape = {}'.format(df_tests.shape))
     
-    return tests.to_json()
+    return tests.to_json(date_format='iso')
 
 
 
@@ -272,6 +273,7 @@ def update_map(opacity, zoom, tests):
     Input("tests", "data"))
 def update_indicator(tests):
     tests = pd.read_json(tests)
+    print(tests)
 
     total_tests = tests.shape[0]
     # Build indicator figure
@@ -280,7 +282,7 @@ def update_indicator(tests):
             {
                 "type": "indicator",
                 "value": total_tests,
-                "number": {"font": {"color": "#263238"}},
+                "number": {"valueformat":",d", "font": {"color": "#263238"}},
             }
         ],
         "layout": {
