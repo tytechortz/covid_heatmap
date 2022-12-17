@@ -118,19 +118,30 @@ app.layout = html.Div([
             # marks = {i for i in range(2020,2022)}
             ),
         ],
-            className = 'four columns'
+            className = 'three columns'
         ),
         html.Div([
             dcc.DatePickerRange(
             id = 'dates',
             min_date_allowed=date(1995, 8, 5),
             max_date_allowed=date(2023, 1, 1),
-            start_date=date(2022, 10, 1),
+            start_date=date(2022, 10, 27),
             initial_visible_month=date(2022, 10, 1),
             end_date=date(2022, 12, 20)
             ),
         ],
-            className = 'six columns'
+            className = 'five columns'
+        ),
+        html.Div([
+            dcc.Slider(
+            id = 'zoom',
+            min = 8,
+            max = 10,
+            value = 10,
+            # marks = {i for i in range(2020,2022)}
+            ),
+        ],
+            className = 'three columns'
         ),
     ],
         className = 'row'
@@ -174,14 +185,15 @@ def get_tests(start_date, end_date):
 
 
 @app.callback(
-    Output("indicator-graph", "figure"),
+    # Output("indicator-graph", "figure"),
     Output("ct", "figure"),
     Input("opacity", "value"),
+    Input("zoom", "value"),
     Input("tests", "data"))
-def update_map(opacity, tests):
+def update_map(opacity, zoom, tests):
     # pop = pd.read_json(pop)
     tests = pd.read_json(tests)
-
+    zoom = zoom
 
     gdf['TRACTCE20'].astype(str)
    
@@ -219,7 +231,7 @@ def update_map(opacity, tests):
                             # category_orders={'TOTALPOP':('1','2','3','4')},
                             # color_discrete_map=color_map,
                             opacity=opacity,
-                            zoom=10,   
+                            zoom=zoom,   
                             center=dict(
                                 lat=39.66,
                                 lon=-104.85
@@ -235,8 +247,33 @@ def update_map(opacity, tests):
         }]}
     )
 
-    total_tests = tests.shape[0]
+    # total_tests = tests.shape[0]
 
+    # Build indicator figure
+    # n_selected_indicator = {
+    #     "data": [
+    #         {
+    #             "type": "indicator",
+    #             "value": total_tests,
+    #             "number": {"font": {"color": "#263238"}},
+    #         }
+    #     ],
+    #     "layout": {
+    #         "template": template,
+    #         "height": 150,
+    #         "margin": {"l": 10, "r": 10, "t": 10, "b": 10},
+    #     },
+    # }
+
+    return fig
+
+@app.callback(
+    Output("indicator-graph", "figure"),
+    Input("tests", "data"))
+def update_indicator(tests):
+    tests = pd.read_json(tests)
+
+    total_tests = tests.shape[0]
     # Build indicator figure
     n_selected_indicator = {
         "data": [
@@ -253,7 +290,7 @@ def update_map(opacity, tests):
         },
     }
 
-    return n_selected_indicator, fig
+    return n_selected_indicator
 
 
 
