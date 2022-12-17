@@ -17,12 +17,6 @@ mapbox_access_token = open(".mapbox_token").read()
 app = dash.Dash(__name__)
 
 
-
-
-# pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
-# pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
-# 
-
 # print(pop)
 # pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 # print(pop.columns)
@@ -36,13 +30,7 @@ app = dash.Dash(__name__)
 
 
 
-# df_tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
-# # print('df_tests shape = {}'.format(df_tests.shape))
-# print(df_tests.columns)
-# df_tests = gpd.GeoDataFrame(df_tests, 
-#     geometry = gpd.points_from_xy(df_tests['geolongitude'], df_tests['geolatitude']))
-# df_tests = df_tests.set_crs('epsg:4326')
-# # print('df_tests w/geometry shape = {}'.format(df_tests.shape))
+
 
 # tIT = sjoin(df_tests, gdf, how='left')
 
@@ -90,6 +78,7 @@ app.layout = html.Div([
     dcc.Graph(id = 'ct'),
     dcc.Store(id='census-tracts', storage_type='session'),
     dcc.Store(id='pop', storage_type='session'),
+    dcc.Store(id='tests', storage_type='session'),
 ])
 
 @app.callback(
@@ -115,6 +104,20 @@ def get_pop(dates):
     pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
     
     return pop.to_json
+
+@app.callback(
+    Output('tests', 'data'),
+    Input('dates', 'value' ))
+def get_tests(dates):
+    tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
+    # print('df_tests shape = {}'.format(df_tests.shape))
+    print(tests.columns)
+    tests = gpd.GeoDataFrame(tests, 
+    geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
+    tests = tests.set_crs('epsg:4326')
+    # print('df_tests w/geometry shape = {}'.format(df_tests.shape))
+    
+    return tests.to_json
 
 
 
