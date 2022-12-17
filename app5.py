@@ -171,7 +171,7 @@ def get_tests(start_date, end_date):
     # print(tests)
     # print(start_date)
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
-    tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] <= end_date)]
+    tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
     print(tests['CollectionDate'].min())
     print(tests['CollectionDate'].max())
     # print('df_tests shape = {}'.format(df_tests.shape))
