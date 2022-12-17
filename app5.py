@@ -99,7 +99,7 @@ app.layout = html.Div([
         html.H4([
             "Arapahoe County Testing",
             html.Img(
-                id="show-indicator-modal",
+                id="show-title-modal",
                 src="assets/question-circle-solid.svg",
                 n_clicks=0,
                 className="info-icon",
@@ -136,8 +136,8 @@ app.layout = html.Div([
             dcc.Slider(
             id = 'zoom',
             min = 8,
-            max = 10,
-            value = 10,
+            max = 11,
+            value = 10.4,
             # marks = {i for i in range(2020,2022)}
             ),
         ],
@@ -173,8 +173,8 @@ app.layout = html.Div([
     ),
     html.Div([
         html.Div([
-            html.H4([
-                "Test Count",
+            html.H6([
+                "Test Count Selected Date Range",
                 html.Img(
                     id="show-indicator-modal",
                     src="assets/question-circle-solid.svg",
@@ -195,7 +195,7 @@ app.layout = html.Div([
             style={"height": 150},
         ),
     ],
-        className="six columns pretty_container",
+        className="four columns pretty_container",
         id="indicator-div",
     ),
     html.Div([
@@ -222,8 +222,35 @@ app.layout = html.Div([
             style={"height": 150},
         ),
     ],
-        className="six columns pretty_container",
+        className="four columns pretty_container",
         id="placeholder-div",
+    ),
+    html.Div([
+        html.Div([
+            html.H4([
+                "Placeholder",
+                html.Img(
+                    id="show-placeholder-modal-2",
+                    src="assets/question-circle-solid.svg",
+                    n_clicks=0,
+                    className="info-icon",
+                ),
+            ]),
+        ],
+            className="container_title",
+        ),
+        dcc.Loading(
+            dcc.Graph(
+                id="placeholder-graph-2",
+                figure=blank_fig(row_heights[0]),
+                config={"displayModeBar": False},
+            ),
+            className="svg-container",
+            style={"height": 150},
+        ),
+    ],
+        className="four columns pretty_container",
+        id="placeholder-div-2",
     ),
    
     dcc.Store(id='tests', storage_type='session'),
@@ -303,8 +330,8 @@ def update_map(opacity, zoom, tests):
                             opacity=opacity,
                             zoom=zoom,   
                             center=dict(
-                                lat=39.66,
-                                lon=-104.85
+                                lat=39.65,
+                                lon=-104.8
                             ))
 
     fig.update_layout(mapbox_style="carto-positron",margin={"r":0,"t":0,"l":0,"b":0})
