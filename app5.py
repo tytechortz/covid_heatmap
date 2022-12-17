@@ -149,16 +149,24 @@ def get_tracts_df(start_date, end_date, pop, tests):
 @app.callback(
     Output("ct", "figure"),
     Input("opacity", "value"),
-    Input("pop", "data"))
-def update_map(opacity, pop):
+    Input("pop", "data"),
+    Input("tests", "data"))
+def update_map(opacity, pop, tests):
     pop = pd.read_json(pop)
+    tests = pd.read_json(tests)
+
+
     print(type(pop))
     pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
     print(type(gdf))
     print(gdf.columns)
     tract_df = gdf.merge(pop, on='TRACTCE20')
 
-    print(opacity)
+    tests = gpd.GeoDataFrame(tests, 
+    geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
+    tests = tests.set_crs('epsg:4326')
+
+    print(tests)
 
     fig = px.choropleth_mapbox(tract_df, 
                             geojson=tract_df.__geo_interface__,
