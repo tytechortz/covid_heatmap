@@ -151,8 +151,11 @@ def get_tracts_df(start_date, end_date, pop, tests):
     Input("opacity", "value"),
     Input("pop", "data"))
 def update_map(opacity, pop):
-    df_pop = pd.read_json(pop)
-
+    pop = pd.read_json(pop)
+    print(type(pop))
+    pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
+    print(type(gdf))
+    print(gdf.columns)
     tract_df = gdf.merge(pop, on='TRACTCE20')
 
     print(opacity)
