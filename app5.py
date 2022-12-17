@@ -21,6 +21,14 @@ app = dash.Dash(__name__)
 gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
 gdf = gdf.to_crs("epsg:4326")
 gdf = gdf.set_geometry('geometry')
+
+pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
+pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
+pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
+pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
+pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
+pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
+pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 # print(gdf)
 
 
@@ -85,26 +93,10 @@ app.layout = html.Div([
         className = 'row'
     ),
     dcc.Graph(id = 'ct'),
-    dcc.Store(id='pop', storage_type='session'),
     dcc.Store(id='tests', storage_type='session'),
-    dcc.Store(id='pop-tests', storage_type='session'),
+
 ])
 
-
-@app.callback(
-    Output('pop', 'data'),
-    Input('dates', 'start_date'),
-    Input('dates', 'end_date'))
-def get_pop(start_date, end_date):
-    pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
-    pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
-    pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
-    pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
-    pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
-    pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
-    pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
-
-    return pop.to_json()
 
 @app.callback(
     Output('tests', 'data'),
@@ -121,52 +113,31 @@ def get_tests(start_date, end_date):
     
     return tests.to_json()
 
-@app.callback(
-    Output('pop-tests', 'data'),
-    Input('dates', 'start_date'),
-    Input('dates', 'end_date'),
-    Input('pop', 'data'),
-    Input('tests', 'data'))
-def get_tracts_df(start_date, end_date, pop, tests):
-    print(start_date)
-    
-    
-
-
-    df_tests = pd.read_json(tests)
-    # print(df_pop)
-    # df_ct = pd.read_json(tracts)
-    # print(df_ct)
-    # print(type(df_ct))
-    # df_ct = GeoDataFrame(df_ct, crs='EPSG:4326', geometry=df_ct.geometry)
-    # print(type(df_ct))
-    # return pop_tests.to_json()
-
-    return(print('Yo'))
-
 
 
 @app.callback(
     Output("ct", "figure"),
     Input("opacity", "value"),
-    Input("pop", "data"),
     Input("tests", "data"))
-def update_map(opacity, pop, tests):
-    pop = pd.read_json(pop)
+def update_map(opacity, tests):
+    # pop = pd.read_json(pop)
     tests = pd.read_json(tests)
 
 
-    print(type(pop))
-    pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
-    print(type(gdf))
-    print(gdf.columns)
-    tract_df = gdf.merge(pop, on='TRACTCE20')
-
+    gdf['TRACTCE20'].astype(str)
+   
+    tract_gdf = gdf.merge(pop, on='TRACTCE20')
+  
     tests = gpd.GeoDataFrame(tests, 
-    geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
+        geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
     tests = tests.set_crs('epsg:4326')
 
-    print(tests)
+    tIT = sjoin(tests, tract_gdf, how='left')
+    tIT = tIT.groupby('TRACTCE20').size().reset_index(name='count')
+  
+    tract_df = tract_gdf.merge(tIT, on='TRACTCE20')
+    tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
+
 
     fig = px.choropleth_mapbox(tract_df, 
                             geojson=tract_df.__geo_interface__,
