@@ -21,8 +21,16 @@ app = dash.Dash(__name__)
 
 
 gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
+# gdf = gdf.to_crs("epsg:4326")
+# gdf = gdf.set_geometry('geometry')
+# gdf['centroid'] = gdf['geometry'].centroid
+# gdf = gpd.read_file('gdf.geojson')
 gdf = gdf.to_crs("epsg:4326")
 gdf = gdf.set_geometry('geometry')
+# gdf['centroid'] = gdf['geometry'].representative_point()
+
+
+print(gdf)
 
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
@@ -41,6 +49,7 @@ bgcolor = "#f3f3f1"  # mapbox light map land color
 # Figure template
 row_heights = [150, 500, 300]
 template = {"layout": {"paper_bgcolor": bgcolor, "plot_bgcolor": bgcolor}}
+
 
 def blank_fig(height):
     """
@@ -306,9 +315,12 @@ def update_map(opacity, zoom, tests):
     zoom = zoom
 
     gdf['TRACTCE20'].astype(str)
+    # gdf['geometry'] = gdf['geometry'].to_crs('epsg:4326')
+
    
     tract_gdf = gdf.merge(pop, on='TRACTCE20')
-  
+    print(tract_gdf.columns)
+    
     tests = gpd.GeoDataFrame(tests, 
         geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
     tests = tests.set_crs('epsg:4326')
@@ -391,20 +403,21 @@ def display_bubble_graph(tests):
     tests = pd.read_json(tests)
     
     gdf['TRACTCE20'].astype(str)
-   
+    print(gdf.columns)
     tract_gdf = gdf.merge(pop, on='TRACTCE20')
 
     tests = gpd.GeoDataFrame(tests, 
         geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
     tests = tests.set_crs('epsg:4326')
-
+    print(type(gdf))
     tIT = sjoin(tract_gdf, tests, how='left')
 
     tIT['test'] = 1
     
     tIT['CollectionDate'] = pd.to_datetime(tIT['CollectionDate'])
-    
-    tIT = tIT.drop(tIT.columns[[0,1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,21,22,23,25,26,27,28]], axis=1)
+    tIT['CollectionDate'] = tIT['CollectionDate'].dt.strftime('%Y-%m-%d')
+    print(tIT.columns)
+    tIT = tIT.drop(tIT.columns[[0,1,3,4,5,6,7,8,9,10,11,12,13,14,15,17,18,19,21,22,23,25,26,27,28]], axis=1)
 
     tIT =tIT.sort_values(['CollectionDate', 'TRACTCE20'])
     tIT['cumsum'] = tIT.groupby('TRACTCE20')['test'].cumsum()
@@ -417,8 +430,8 @@ def display_bubble_graph(tests):
         'GDP - Scatter': px.scatter(
             tIT, x="cumsum", y="TperCap", animation_frame="CollectionDate", 
             animation_group="TRACTCE20", size="TOTALPOP", color="TRACTCE20", 
-            hover_name="TRACTCE20", log_x=False, size_max=55, 
-            range_x=[0,1500], range_y=[0, .5]),
+            hover_name="TRACTCE20", log_x=True, log_y=True, size_max=55, 
+            range_x=[1,8000], range_y=[.005, 1]),
       
     }
    

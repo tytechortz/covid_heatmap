@@ -1,26 +1,33 @@
-import shapefile
+# import shapefile
 from json import dumps
 import pandas as pd
 import json
 from pandas import json_normalize
 import geopandas as gpd
 
-df = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
-print(df)
-print(type(df))
-df = df.set_geometry('geometry')
-print(df.shape)
+# df = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
+# print(df)
+# print(type(df))
+# df = df.set_geometry('geometry')
+# print(df.shape)
 
-pop = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
-pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
-pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
-pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
-pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
-pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
+# pop = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
+# pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
+# pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
+# pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
+# pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
+# pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
 
-print(pop)
-df_combo = pd.merge(pop, df, on='TRACTCE20', how='inner')
-print(type(df_combo))
+# print(pop)
+# df_combo = pd.merge(pop, df, on='TRACTCE20', how='inner')
+# print(type(df_combo))
+
+gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
+gdf = gdf.to_crs("epsg:4326")
+gdf = gdf.set_geometry('geometry')
+# gdf['centroid'] = gdf['geometry'].representative_point()
+print(gdf)
+gdf.to_file("gdf.geojson", driver='GeoJSON')
 
 # reader = shapefile.Reader('County_Boundary_SHAPE_WGS/County_Boundary_WGS.shp')
 # fields = reader.fields[1:]
