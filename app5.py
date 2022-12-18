@@ -425,7 +425,7 @@ def display_bubble_graph(tests):
     gdf['TRACTCE20'].astype(str)
    
     tract_gdf = gdf.merge(pop, on='TRACTCE20')
-
+    # print(tract_gdf)
     tests = gpd.GeoDataFrame(tests, 
         geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
     tests = tests.set_crs('epsg:4326')
@@ -434,33 +434,54 @@ def display_bubble_graph(tests):
 
     # gdf['TRACTCE20'].astype(str)
    
-    # tract_gdf = gdf.merge(pop, on='TRACTCE20')
+    # tract_gdf = gdf.merge(pop, o
+    # n='TRACTCE20')
 
-    tIT = sjoin(tests, tract_gdf, how='left')
-    tITs = tIT.groupby('TRACTCE20').size().reset_index(name='count')
-    print(type(tITs))
+    tIT = sjoin(tract_gdf, tests, how='left')
+    print(tIT)
+    print(tIT.iloc[0])
+    # print(tIT.iloc[50])
+    # print(tIT)
+    # tIT.sort_values(by='CollectionDate', inplace=True)
+    tIT['test'] = 1
+    # print(tIT)
+    # tIT['Cumsum'] = tIT.groupby(by=['TRACTCE20','CollectionDate'])['test'].cumsum()
+    # print(tIT)
+    # print(tIT.columns)
+    
+    tIT['CollectionDate'] = pd.to_datetime(tIT['CollectionDate'])
+    
+    
+    # tIT = tIT.set_index('CollectionDate')
+    # tIT['CollectionDate'] = tIT.dt.strftime('%Y-%m-%d')
+    # tIT['count'] = tIT.groupby(['TRACTCE20'])['CollectionDate'].transform('count')
+    
+    # tIT['Cumsum'] = tIT.groupby(by=['CollectionDate'])['test'].cumsum()
     print(tIT.columns)
-    df_T = tIT.merge(tITs, on='TRACTCE20')
-    df_T.sort_values(by='CollectionDate', inplace=True)
-    print(df_T)
-    # tract_df = tract_gdf.merge(tITs, on='TRACTCE20')
-    # tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
-    df_T['cumSum_count'] = df_T.groupby(['TRACTCE20'])['count'].cumsum()
-    # df_T['cumSum_count'] = df_T['count'].cumsum()
-    print(df_T.columns)
-    # print(tract_df.columns)
+    tIT = tIT.drop(tIT.columns[[0,1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,21,22,23,25,26,27,28]], axis=1)
+    # tIT = tIT.drop_duplicates()
+    tIT =tIT.sort_values(['CollectionDate', 'TRACTCE20'])
+    tIT['cumsum'] = tIT.groupby('TRACTCE20')['test'].cumsum()
+    print(tIT)
+    print(tIT.columns)
+    tIT = tIT.sort_values('CollectionDate')
+    print(tIT['TRACTCE20'].dtype)
+    tIT['TperCap'] = tIT['cumsum'] / tIT['TOTALPOP']
+    # selected = tIT.loc[tIT['TRACTCE20'] == '083700']
+    # print(selected)
+    print(tIT.head(100))
     animations = {
         'GDP - Scatter': px.scatter(
-            df_T, x="cumSum_count", y="count", animation_frame="CollectionDate", 
+            tIT, x="cumsum", y="TperCap", animation_frame="CollectionDate", 
             animation_group="TRACTCE20", size="TOTALPOP", color="TRACTCE20", 
             hover_name="TRACTCE20", log_x=False, size_max=55, 
-            range_x=[100,100000], range_y=[25,90]),
+            range_x=[0,1500], range_y=[0, .5]),
         # 'Population - Bar': px.bar(
         #     tests, x="continent", y="pop", color="continent", 
         #     animation_frame="year", animation_group="country", 
         #     range_y=[0,4000000000]),
     }
-
+    # return print('Yo')
     return animations['GDP - Scatter']
 
 if __name__ == '__main__':
