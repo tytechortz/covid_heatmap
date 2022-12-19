@@ -153,12 +153,119 @@ app.layout = html.Div([
     ],
         className = 'row'
     ),
+    html.Div([
+        html.H4([
+            "Locations",
+            html.Img(
+                id="show-map-modal",
+                src="assets/question-circle-solid.svg",
+                className="info-icon",
+            ),
+        ],
+            className="container_title",
+        ),
+        dcc.Graph(
+            id="ct",
+            figure=blank_fig(row_heights[1]),
+            config={"displayModeBar": False},
+        ),
+    ],
+        className="twelve columns pretty_container",
+        style={
+            "width": "98%",
+            "margin-right": "0",
+        },
+        id="map-div",
+    ),
+    html.Div([
+        html.Div([
+            html.H6([
+                "Test Count Selected Date Range",
+                html.Img(
+                    id="show-indicator-modal",
+                    src="assets/question-circle-solid.svg",
+                    n_clicks=0,
+                    className="info-icon",
+                ),
+            ]),
+        ],
+            className="container_title",
+        ),
+        dcc.Loading(
+            dcc.Graph(
+                id="indicator-graph",
+                figure=blank_fig(row_heights[0]),
+                config={"displayModeBar": False},
+            ),
+            className="svg-container",
+            style={"height": 150},
+        ),
+    ],
+        className="four columns pretty_container",
+        id="indicator-div",
+    ),
+    html.Div([
+        html.Div([
+            html.H4([
+                "Placeholder",
+                html.Img(
+                    id="show-placeholder-modal",
+                    src="assets/question-circle-solid.svg",
+                    n_clicks=0,
+                    className="info-icon",
+                ),
+            ]),
+        ],
+            className="container_title",
+        ),
+        dcc.Loading(
+            dcc.Graph(
+                id="placeholder-graph",
+                figure=blank_fig(row_heights[0]),
+                config={"displayModeBar": False},
+            ),
+            className="svg-container",
+            style={"height": 150},
+        ),
+    ],
+        className="four columns pretty_container",
+        id="placeholder-div",
+    ),
+    html.Div([
+        html.Div([
+            html.H4([
+                "Placeholder",
+                html.Img(
+                    id="show-placeholder-modal-2",
+                    src="assets/question-circle-solid.svg",
+                    n_clicks=0,
+                    className="info-icon",
+                ),
+            ]),
+        ],
+            className="container_title",
+        ),
+        dcc.Loading(
+            dcc.Graph(
+                id="placeholder-graph-2",
+                figure=blank_fig(row_heights[0]),
+                config={"displayModeBar": False},
+            ),
+            className="svg-container",
+            style={"height": 150},
+        ),
+    ],
+        className="four columns pretty_container",
+        id="placeholder-div-2",
+    ),
+    
+    dcc.Store(id='tests', storage_type='session'),
 ])
 
 
 @app.callback(
-    Output('choropleth', 'figure'),
-    [Input('choropleth', 'clickData')])
+    Output('ct', 'figure'),
+    [Input('ct', 'clickData')])
 def update_figure(clickData):    
     # print(clickData)
     if clickData is not None:            
