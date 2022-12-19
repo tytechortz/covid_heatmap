@@ -25,6 +25,47 @@ pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 
 gdf['TRACTCE20'].astype(str)
 
-t_gdf = gdf.merge(pop, on='TRACTCE20')
+t_gdf = gdf.merge(pop, on='TRACTCE20').set_index('TRACTCE20')
 
-print(t_gdf)
+print(t_gdf['geometry'])
+print(t_gdf.columns)
+
+def get_figure():
+    # Base choropleth layer --------------#
+    fig = px.choropleth_mapbox(t_gdf, 
+                                geojson=t_gdf.geometry, 
+                                color="TOTALPOP",                               
+                                locations=t_gdf.index, 
+                                # featureidkey="properties.TRACTCE20",
+                                opacity=0.5)
+
+  
+
+    #------------------------------------#
+    fig.update_layout(mapbox_style="carto-positron", 
+                      mapbox_zoom=10.4,
+                      mapbox_center={"lat": 39.65, "lon": -104.8},
+                      margin={"r":0,"t":0,"l":0,"b":0},
+                      uirevision='constant')
+    
+    return fig
+
+
+fig = get_figure()
+
+
+app.layout = html.Div([    
+    dcc.Graph(
+        id='choropleth',
+        figure=fig
+    )
+])
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    app.run_server(port=8080,debug=True)
