@@ -37,7 +37,7 @@ CT_lookup = {feature['properties']['TRACTCE20']: feature
 
 
 # function to get the geojson file for highlighted area
-def get_highlights(selections, geojson=geojson, district_lookup=CT_lookup):
+def get_highlights(selections, geojson=geojson, CT_lookup=CT_lookup):
     geojson_highlights = dict()
     for k in geojson.keys():
         if k != 'features':
@@ -62,7 +62,7 @@ def get_figure(selections):
 
         fig.add_trace(
             px.choropleth_mapbox(t_gdf, geojson=highlights, 
-                                 color="TOTALPOP",
+                                 color="STATEFP20",
                                  locations="TRACTCE20", 
                                  featureidkey="properties.TRACTCE20",                                 
                                  opacity=1).data[0]
@@ -104,6 +104,7 @@ app.layout = html.Div([
     Output('choropleth', 'figure'),
     [Input('choropleth', 'clickData')])
 def update_figure(clickData):    
+    print(clickData)
     if clickData is not None:            
         location = clickData['points'][0]['location']
 
