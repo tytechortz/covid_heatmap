@@ -60,7 +60,7 @@ def get_highlights(selections, geojson=t_gdf, CT_lookup=CT_lookup):
     print(geojson_highlights)
     return geojson_highlights
 
-def get_figure(selections):
+def get_figure(selections, zoom):
     print(selections)
     # Base choropleth layer --------------#
     fig = px.choropleth_mapbox(t_gdf, 
@@ -86,7 +86,7 @@ def get_figure(selections):
         )
     #------------------------------------#
     fig.update_layout(mapbox_style="carto-positron", 
-                      mapbox_zoom=10.4,
+                      mapbox_zoom=zoom,
                       mapbox_center={"lat": 39.65, "lon": -104.8},
                       margin={"r":0,"t":0,"l":0,"b":0},
                       uirevision='constant')
@@ -265,8 +265,9 @@ app.layout = html.Div([
 
 @app.callback(
     Output('ct', 'figure'),
-    [Input('ct', 'clickData')])
-def update_figure(clickData):    
+    Input('ct', 'clickData'),
+    Input('zoom', 'value'))
+def update_figure(clickData, zoom):    
     # print(clickData)
     if clickData is not None:            
         location = clickData['points'][0]['location']
@@ -276,7 +277,7 @@ def update_figure(clickData):
         else:
             selections.remove(location)
         
-    return get_figure(selections)
+    return get_figure(selections, zoom)
 
 
 @app.callback(
