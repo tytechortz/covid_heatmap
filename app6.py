@@ -30,11 +30,11 @@ t_gdf = gdf.merge(pop, on='TRACTCE20')
 
 f = open('/Users/jamesswank/Python_projects/covid_heatmap/tracts.geojson')
 geojson=json.load(f)
-
+# print(geojson.keys())
 # Prepare a lookup dictionary for selecting highlight areas in geojson
 CT_lookup = {feature['properties']['TRACTCE20']: feature
                 for feature in geojson['features']}
-
+# print(CT_lookup)
 
 # function to get the geojson file for highlighted area
 def get_highlights(selections, geojson=geojson, CT_lookup=CT_lookup):
@@ -78,8 +78,9 @@ def get_figure(selections):
     return fig
 
 
-selections = list(CT_lookup.keys())[:5]
-fig = get_figure(selections)
+# selections = list(CT_lookup.keys())[:5]
+# print(len(selections))
+# fig = get_figure(selections)
 
 
 # Build Dash layout
@@ -92,7 +93,7 @@ selections = set()
 app.layout = html.Div([    
     dcc.Graph(
         id='choropleth',
-        figure=fig
+        # figure=fig
     )
 ])
 

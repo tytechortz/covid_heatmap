@@ -29,8 +29,39 @@ t_gdf = gdf.merge(pop, on='TRACTCE20').set_index('TRACTCE20')
 
 print(t_gdf['geometry'])
 print(t_gdf.columns)
+# print(t_gdf.loc[[0]])
+print(t_gdf.geometry)
 
-def get_figure():
+# Prepare a lookup dictionary for selecting highlight areas in geojson
+# CT_lookup = {feature['properties']['TRACTCE20']: feature
+#                 for feature in geojson['features']}
+
+# CT_lookup = dict(zip(t_gdf.TRACTCE20, t_gdf.geometry))
+CT_lookup = pd.Series(t_gdf.geometry.values, index=t_gdf.index)
+
+# print(type(CT_lookup[0]))
+# print(CT_lookup.iloc[1])
+# CT_lookup = {}
+
+# function to get the geojson file for highlighted area
+# def get_highlights(selections, geojson=t_gdf, CT_lookup=CT_lookup):
+#     geojson_highlights = dict()
+#     for k in geojson.keys():
+#         if k != 'features':
+#             geojson_highlights[k] = geojson[k]
+#         else:
+#             geojson_highlights[k] = [CT_lookup[selection] for selection in selections]        
+#     return geojson_highlights
+
+def get_highlights(selections, geojson=t_gdf, CT_lookup=CT_lookup):
+    # geojson_highlights = dict()
+    print(selections)
+    geojson_highlights = geojson.loc[selections]
+    print(geojson_highlights)
+    return geojson_highlights
+
+def get_figure(selections):
+    print(selections)
     # Base choropleth layer --------------#
     fig = px.choropleth_mapbox(t_gdf, 
                                 geojson=t_gdf.geometry, 
@@ -40,7 +71,19 @@ def get_figure():
                                 opacity=0.5)
 
   
+    # Second layer - Highlights ----------#
+    if len(selections) > 0:
+        # highlights contain the geojson information for only 
+        # the selected districts
+        highlights = get_highlights(selections)
 
+        fig.add_trace(
+            px.choropleth_mapbox(t_gdf, geojson=highlights, 
+                                 color="STATEFP20",
+                                 locations=t_gdf.index, 
+                                #  featureidkey="properties.TRACTCE20",                                 
+                                 opacity=1).data[0]
+        )
     #------------------------------------#
     fig.update_layout(mapbox_style="carto-positron", 
                       mapbox_zoom=10.4,
@@ -51,18 +94,36 @@ def get_figure():
     return fig
 
 
-fig = get_figure()
 
+
+
+
+
+
+selections = set()
+# print(selections)
 
 app.layout = html.Div([    
     dcc.Graph(
         id='choropleth',
-        figure=fig
     )
 ])
 
 
-
+@app.callback(
+    Output('choropleth', 'figure'),
+    [Input('choropleth', 'clickData')])
+def update_figure(clickData):    
+    # print(clickData)
+    if clickData is not None:            
+        location = clickData['points'][0]['location']
+        print(location)
+        if location not in selections:
+            selections.add(location)
+        else:
+            selections.remove(location)
+        
+    return get_figure(selections)
 
 
 
