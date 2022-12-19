@@ -30,7 +30,19 @@ t_gdf = gdf.merge(pop, on='TRACTCE20').set_index('TRACTCE20')
 
 CT_lookup = pd.Series(t_gdf.geometry.values, index=t_gdf.index)
 
-#
+def blank_fig(height):
+    """
+    Build blank figure with the requested height
+    """
+    return {
+        "data": [],
+        "layout": {
+            "height": height,
+            "template": template,
+            "xaxis": {"visible": False},
+            "yaxis": {"visible": False},
+        },
+    }
 
 def get_highlights(selections, geojson=t_gdf, CT_lookup=CT_lookup):
     # geojson_highlights = dict()
@@ -78,10 +90,22 @@ def get_figure(selections):
 selections = set()
 # print(selections)
 
-app.layout = html.Div([    
-    dcc.Graph(
-        id='choropleth',
-    )
+
+
+app.layout = html.Div([
+    html.Div([
+        html.H4([
+            "Arapahoe County Testing",
+            html.Img(
+                id="show-title-modal",
+                src="assets/question-circle-solid.svg",
+                n_clicks=0,
+                className="info-icon",
+            ),
+        ]),
+    ],
+        className="container_title",
+    ),
 ])
 
 
