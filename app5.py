@@ -10,6 +10,7 @@ import plotly.express as px
 from dash.dependencies import Input, Output, State
 
 from geopandas.tools import sjoin
+import json
 
 from textwrap import dedent
 
@@ -30,7 +31,7 @@ gdf = gdf.set_geometry('geometry')
 # gdf['centroid'] = gdf['geometry'].representative_point()
 
 
-print(gdf)
+# print(gdf.columns)
 
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
@@ -40,6 +41,9 @@ pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else
 pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
 pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 
+gdf['TRACTCE20'].astype(str)
+
+tract_gdf = gdf.merge(pop, on='TRACTCE20')
 
 
 factor = 0.9
@@ -49,6 +53,61 @@ bgcolor = "#f3f3f1"  # mapbox light map land color
 # Figure template
 row_heights = [150, 500, 300]
 template = {"layout": {"paper_bgcolor": bgcolor, "plot_bgcolor": bgcolor}}
+
+
+f = open('/Users/jamesswank/Python_projects/covid_heatmap/tracts.geojson')
+geojson=json.load(f)
+
+# print(geojson)
+
+
+
+# Prepare a lookup dictionary for selecting highlight areas in geojson
+CT_lookup = {feature['properties']['TRACTCE20']: feature
+                for feature in geojson['features']}
+
+
+# function to get the geojson file for highlighted area
+def get_highlights(selections, geojson=geojson, district_lookup=CT_lookup):
+    geojson_highlights = dict()
+    for k in geojson.keys():
+        if k != 'features':
+            geojson_highlights[k] = geojson[k]
+        else:
+            geojson_highlights[k] = [CT_lookup[selection] for selection in selections]        
+    return geojson_highlights
+
+
+def get_figure(selections):
+    # Base choropleth layer --------------#
+    fig = px.choropleth_mapbox(tract_gdf, geojson=geojson, 
+                               color="TOTALPOP",                               
+                               locations="TRACTCE20", 
+                               featureidkey="properties.district",
+                               opacity=0.5)
+
+    # Second layer - Highlights ----------#
+    if len(selections) > 0:
+        # highlights contain the geojson information for only 
+        # the selected districts
+        highlights = get_highlights(selections)
+
+        fig.add_trace(
+            px.choropleth_mapbox(tract_gdf, geojson=highlights, 
+                                 color="TOTALPOP",
+                                 locations="district", 
+                                 featureidkey="properties.district",                                 
+                                 opacity=1).data[0]
+        )
+
+    #------------------------------------#
+    fig.update_layout(mapbox_style="carto-positron", 
+                      mapbox_zoom=9,
+                      mapbox_center={"lat": 45.5517, "lon": -73.7073},
+                      margin={"r":0,"t":0,"l":0,"b":0},
+                      uirevision='constant')
+    
+    return fig
 
 
 def blank_fig(height):
@@ -308,18 +367,40 @@ def get_tests(start_date, end_date):
     Output("ct", "figure"),
     Input("opacity", "value"),
     Input("zoom", "value"),
+    Input("ct", "clickData"),
     Input("tests", "data"))
-def update_map(opacity, zoom, tests):
+def update_map(opacity, zoom, clickData, tests):
+    print(clickData)
+
+    
+
+
+
+
+
     # pop = pd.read_json(pop)
     tests = pd.read_json(tests)
     zoom = zoom
 
-    gdf['TRACTCE20'].astype(str)
+    selections = set()
+
+    if clickData is not None:            
+        location = clickData['points'][0]['TRACTCE20']
+
+        if location not in selections:
+            selections.add(location)
+        else:
+            selections.remove(location)
+        
+    return get_figure(selections)
+
+
+    # gdf['TRACTCE20'].astype(str)
     # gdf['geometry'] = gdf['geometry'].to_crs('epsg:4326')
 
    
-    tract_gdf = gdf.merge(pop, on='TRACTCE20')
-    print(tract_gdf.columns)
+    # tract_gdf = gdf.merge(pop, on='TRACTCE20')
+    # print(tract_gdf.columns)
     
     tests = gpd.GeoDataFrame(tests, 
         geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
@@ -331,6 +412,10 @@ def update_map(opacity, zoom, tests):
     tract_df = tract_gdf.merge(tITs, on='TRACTCE20')
     tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
     # print(tract_df)
+
+
+
+
 
     fig = px.choropleth_mapbox(tract_df, 
                             geojson=tract_df.__geo_interface__,
@@ -369,6 +454,9 @@ def update_map(opacity, zoom, tests):
         }]}
     )
 
+   
+
+
     return fig
 
 @app.callback(
@@ -403,20 +491,20 @@ def display_bubble_graph(tests):
     tests = pd.read_json(tests)
     
     gdf['TRACTCE20'].astype(str)
-    print(gdf.columns)
+    # print(gdf.columns)
     tract_gdf = gdf.merge(pop, on='TRACTCE20')
 
     tests = gpd.GeoDataFrame(tests, 
         geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
     tests = tests.set_crs('epsg:4326')
-    print(type(gdf))
+    # print(type(gdf))
     tIT = sjoin(tract_gdf, tests, how='left')
 
     tIT['test'] = 1
     
     tIT['CollectionDate'] = pd.to_datetime(tIT['CollectionDate'])
     tIT['CollectionDate'] = tIT['CollectionDate'].dt.strftime('%Y-%m-%d')
-    print(tIT.columns)
+    # print(tIT.columns)
     tIT = tIT.drop(tIT.columns[[0,1,3,4,5,6,7,8,9,10,11,12,13,14,15,17,18,19,21,22,23,25,26,27,28]], axis=1)
 
     tIT =tIT.sort_values(['CollectionDate', 'TRACTCE20'])

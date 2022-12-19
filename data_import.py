@@ -4,6 +4,17 @@ import pandas as pd
 import json
 from pandas import json_normalize
 import geopandas as gpd
+import plotly.express as px
+
+
+
+# geojson = px.data.election_geojson()
+# print(geojson)
+
+geojson = px.data.election_geojson()
+gj = gpd.read_file('px.data.election_geojson()')
+print(gj)
+
 
 # df = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
 # print(df)
@@ -22,12 +33,12 @@ import geopandas as gpd
 # df_combo = pd.merge(pop, df, on='TRACTCE20', how='inner')
 # print(type(df_combo))
 
-gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
-gdf = gdf.to_crs("epsg:4326")
-gdf = gdf.set_geometry('geometry')
-# gdf['centroid'] = gdf['geometry'].representative_point()
-print(gdf)
-gdf.to_file("gdf.geojson", driver='GeoJSON')
+# gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
+# gdf = gdf.to_crs("epsg:4326")
+# gdf = gdf.set_geometry('geometry')
+# # gdf['centroid'] = gdf['geometry'].representative_point()
+# print(gdf)
+# gdf.to_file("gdf.geojson", driver='GeoJSON')
 
 # reader = shapefile.Reader('County_Boundary_SHAPE_WGS/County_Boundary_WGS.shp')
 # fields = reader.fields[1:]
