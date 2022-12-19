@@ -7,6 +7,15 @@ from dash.dependencies import Input, Output, State
 
 import pandas as pd 
 
+from datetime import date
+
+# Colors
+bgcolor = "#f3f3f1"  # mapbox light map land color
+
+# Figure template
+row_heights = [150, 500, 300]
+template = {"layout": {"paper_bgcolor": bgcolor, "plot_bgcolor": bgcolor}}
+
 # Build Dash layout
 app = dash.Dash(__name__)
 
@@ -105,6 +114,44 @@ app.layout = html.Div([
         ]),
     ],
         className="container_title",
+    ),
+    html.Div([
+        html.Div([
+            dcc.Slider(
+            id = 'opacity',
+            min = 0,
+            max = 1,
+            value = 1,
+            # marks = {i for i in range(2020,2022)}
+            ),
+        ],
+            className = 'three columns'
+        ),
+        html.Div([
+            dcc.DatePickerRange(
+            id = 'dates',
+            min_date_allowed=date(1995, 8, 5),
+            max_date_allowed=date(2023, 1, 1),
+            start_date=date(2022, 10, 25),
+            initial_visible_month=date(2022, 10, 1),
+            end_date=date(2022, 12, 20)
+            ),
+        ],
+            className = 'five columns'
+        ),
+        html.Div([
+            dcc.Slider(
+            id = 'zoom',
+            min = 8,
+            max = 11,
+            value = 10.4,
+            # marks = {i for i in range(2020,2022)}
+            ),
+        ],
+            className = 'three columns'
+        ),
+    ],
+        className = 'row'
     ),
 ])
 
