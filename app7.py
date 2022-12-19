@@ -279,6 +279,32 @@ def update_figure(clickData):
     return get_figure(selections)
 
 
+@app.callback(
+    Output("indicator-graph", "figure"),
+    Input("tests", "data"))
+def update_indicator(tests):
+    tests = pd.read_json(tests)
+
+    total_tests = tests.shape[0]
+    # Build indicator figure
+    n_selected_indicator = {
+        "data": [
+            {
+                "type": "indicator",
+                "value": total_tests,
+                "number": {"valueformat":",d", "font": {"color": "#263238"}},
+            }
+        ],
+        "layout": {
+            "template": template,
+            "height": 150,
+            "margin": {"l": 10, "r": 10, "t": 10, "b": 10},
+        },
+    }
+
+    return n_selected_indicator
+
+
 
 
 if __name__ == '__main__':
