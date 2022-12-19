@@ -27,31 +27,10 @@ gdf['TRACTCE20'].astype(str)
 
 t_gdf = gdf.merge(pop, on='TRACTCE20').set_index('TRACTCE20')
 
-print(t_gdf['geometry'])
-print(t_gdf.columns)
-# print(t_gdf.loc[[0]])
-print(t_gdf.geometry)
 
-# Prepare a lookup dictionary for selecting highlight areas in geojson
-# CT_lookup = {feature['properties']['TRACTCE20']: feature
-#                 for feature in geojson['features']}
-
-# CT_lookup = dict(zip(t_gdf.TRACTCE20, t_gdf.geometry))
 CT_lookup = pd.Series(t_gdf.geometry.values, index=t_gdf.index)
 
-# print(type(CT_lookup[0]))
-# print(CT_lookup.iloc[1])
-# CT_lookup = {}
-
-# function to get the geojson file for highlighted area
-# def get_highlights(selections, geojson=t_gdf, CT_lookup=CT_lookup):
-#     geojson_highlights = dict()
-#     for k in geojson.keys():
-#         if k != 'features':
-#             geojson_highlights[k] = geojson[k]
-#         else:
-#             geojson_highlights[k] = [CT_lookup[selection] for selection in selections]        
-#     return geojson_highlights
+#
 
 def get_highlights(selections, geojson=t_gdf, CT_lookup=CT_lookup):
     # geojson_highlights = dict()
@@ -92,10 +71,6 @@ def get_figure(selections):
                       uirevision='constant')
     
     return fig
-
-
-
-
 
 
 
