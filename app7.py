@@ -262,6 +262,18 @@ app.layout = html.Div([
     dcc.Store(id='tests', storage_type='session'),
 ])
 
+@app.callback(
+    Output('tests', 'data'),
+    Input('dates', 'start_date'),
+    Input('dates', 'end_date'))
+def get_tests(start_date, end_date):
+    tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
+
+    tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
+    tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
+    
+    return tests.to_json(date_format='iso')
+
 
 @app.callback(
     Output('ct', 'figure'),
