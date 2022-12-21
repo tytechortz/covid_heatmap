@@ -220,7 +220,7 @@ app.layout = html.Div([
         dcc.Loading(
             dcc.Graph(
                 id="indicator-graph",
-                figure=blank_fig(row_heights[0]),
+                figure=blank_fig(row_heights[1]),
                 config={"displayModeBar": False},
             ),
             className="svg-container",
@@ -231,59 +231,59 @@ app.layout = html.Div([
         id="indicator-div",
     ),
     html.Div([
-        html.Div([
-            html.H4([
-                "Placeholder",
-                html.Img(
-                    id="show-placeholder-modal",
-                    src="assets/question-circle-solid.svg",
-                    n_clicks=0,
-                    className="info-icon",
-                ),
-            ]),
-        ],
-            className="container_title",
-        ),
+        # html.Div([
+        #     html.H4([
+        #         "Tests Selected Tracts",
+        #         # html.Img(
+        #         #     id="show-placeholder-modal",
+        #         #     src="assets/question-circle-solid.svg",
+        #         #     n_clicks=0,
+        #         #     className="info-icon",
+        #         # ),
+        #     ]),
+        # ],
+        #     className="container_title",
+        # ),
         dcc.Loading(
             dcc.Graph(
-                id="placeholder-graph",
-                figure=blank_fig(row_heights[0]),
+                id="test-graph",
+                figure=blank_fig(row_heights[1]),
                 config={"displayModeBar": False},
             ),
             className="svg-container",
-            style={"height": 150},
+            style={"height": 350},
         ),
     ],
-        className="four columns pretty_container",
+        className="eight columns pretty_container",
         id="placeholder-div",
     ),
-    html.Div([
-        html.Div([
-            html.H4([
-                "Placeholder",
-                html.Img(
-                    id="show-placeholder-modal-2",
-                    src="assets/question-circle-solid.svg",
-                    n_clicks=0,
-                    className="info-icon",
-                ),
-            ]),
-        ],
-            className="container_title",
-        ),
-        dcc.Loading(
-            dcc.Graph(
-                id="placeholder-graph-2",
-                figure=blank_fig(row_heights[0]),
-                config={"displayModeBar": False},
-            ),
-            className="svg-container",
-            style={"height": 150},
-        ),
-    ],
-        className="four columns pretty_container",
-        id="placeholder-div-2",
-    ),
+    # html.Div([
+    #     html.Div([
+    #         html.H4([
+    #             "Placeholder",
+    #             html.Img(
+    #                 id="show-placeholder-modal-2",
+    #                 src="assets/question-circle-solid.svg",
+    #                 n_clicks=0,
+    #                 className="info-icon",
+    #             ),
+    #         ]),
+    #     ],
+    #         className="container_title",
+    #     ),
+    #     dcc.Loading(
+    #         dcc.Graph(
+    #             id="placeholder-graph-2",
+    #             figure=blank_fig(row_heights[0]),
+    #             config={"displayModeBar": False},
+    #         ),
+    #         className="svg-container",
+    #         style={"height": 150},
+    #     ),
+    # ],
+    #     className="four columns pretty_container",
+    #     id="placeholder-div-2",
+    # ),
     
     dcc.Store(id='tests', storage_type='session'),
 ])
@@ -311,7 +311,7 @@ def update_figure(clickData, tests, zoom):
   
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
     # tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
-    print(tests)
+    # print(tests)
 
     
     # print(clickData)
@@ -350,6 +350,22 @@ def update_indicator(tests):
     }
 
     return n_selected_indicator
+
+@app.callback(
+    Output("test-graph", "figure"),
+    Input("tests", "data"))
+def update_indicator(tests):
+    tests = pd.read_json(tests)
+    print(tests)
+    # total_tests = tests.shape[0]
+    
+    fig = px.histogram(tests, x='CollectionDate')
+
+    fig.update_layout(bargap=0.2)
+
+
+
+    return fig
 
 
 
