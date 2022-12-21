@@ -65,7 +65,7 @@ def get_highlights(selections, geojson=t_gdf):
 
 def get_figure(selections, zoom, tests):
     tests = pd.read_json(tests)
-    
+    print(selections)
     tests = gpd.GeoDataFrame(tests, 
         geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
     tests = tests.set_crs('epsg:4326')
@@ -73,13 +73,13 @@ def get_figure(selections, zoom, tests):
 
     tIT = sjoin(tests, t_gdf, how='right')
     # print(tIT.loc['index_right'])
-    print(tIT.columns)
-    print(tIT)
+    # print(tIT.columns)
+    # print(tIT)
     tITs = tIT.groupby('TRACTCE20').size().reset_index(name='count')
-    print(tITs)
+    # print(tITs)
     tgdf = t_gdf.merge(tITs, on='TRACTCE20')
     tgdf['TperCap'] = tgdf['count'] / tgdf['TOTALPOP']
-
+    tgdf = tgdf.set_index('TRACTCE20')
     print(tgdf)
 
     fig = px.choropleth_mapbox(tgdf, 
@@ -105,6 +105,7 @@ def get_histogram(selections, zoom, tests):
         geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
     tests = tests.set_crs('epsg:4326')
     tIT = sjoin(tests, t_gdf, how='left')
+    # print(tIT)
    
     if len(selections) == 0:
 
@@ -113,11 +114,11 @@ def get_histogram(selections, zoom, tests):
     # Second layer - Highlights ----------#
     else:
         df3 = tIT.loc[selections]
-        print(df3)
+        print(df3.columns)
         # highlights contain the geojson information for only 
         # the selected districts
         highlights = get_highlights(selections)
-        print(highlights)
+        print(highlights.columns)
         tIT = tIT
         fig = px.histogram(tIT, x='CollectionDate')
       
