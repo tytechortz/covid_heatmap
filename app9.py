@@ -36,7 +36,7 @@ pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 gdf['TRACTCE20'].astype(str)
 
 t_gdf = gdf.merge(pop, on='TRACTCE20').set_index('TRACTCE20')
-
+print(t_gdf)
 
 
 def blank_fig(height):
@@ -268,5 +268,41 @@ def get_tests(start_date, end_date):
 
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
     tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
-    
+   
     return tests.to_json(date_format='iso')
+
+
+
+
+
+
+@app.callback(
+    Output("indicator-graph", "figure"),
+    Input("tests", "data"))
+def update_indicator(tests):
+    tests = pd.read_json(tests)
+
+    total_tests = tests.shape[0]
+    # Build indicator figure
+    n_selected_indicator = {
+        "data": [
+            {
+                "type": "indicator",
+                "value": total_tests,
+                "number": {"valueformat":",d", "font": {"color": "#263238"}},
+            }
+        ],
+        "layout": {
+            "template": template,
+            "height": 150,
+            "margin": {"l": 10, "r": 10, "t": 10, "b": 10},
+        },
+    }
+
+    return n_selected_indicator
+
+
+
+
+if __name__ == '__main__':
+    app.run_server(port=8080,debug=True)
