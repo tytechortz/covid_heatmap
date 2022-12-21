@@ -9,6 +9,8 @@ import pandas as pd
 
 from datetime import date
 
+from geopandas.tools import sjoin
+
 
 # Colors
 bgcolor = "#f3f3f1"  # mapbox light map land color
@@ -61,36 +63,46 @@ def get_highlights(selections, geojson=t_gdf):
     return geojson_highlights
 
 
-def get_figure(selections, zoom):
-    print(selections)
-    # Base choropleth layer --------------#
-    fig = px.choropleth_mapbox(t_gdf, 
-                                geojson=t_gdf.geometry, 
-                                color="TOTALPOP",                               
-                                locations=t_gdf.index, 
-                                # featureidkey="properties.TRACTCE20",
-                                opacity=0.5)
+def get_figure(selections, zoom, tests):
 
+    fig = []
+    #------------------------------------#
+    # fig.update_layout(mapbox_style="carto-positron", 
+    #                   mapbox_zoom=zoom,
+    #                   mapbox_center={"lat": 39.65, "lon": -104.8},
+    #                   margin={"r":0,"t":0,"l":0,"b":0},
+    #                   uirevision='constant')
+    
+    return fig
+
+
+def get_histogram(selections, zoom, tests):
+    tests = pd.read_json(tests)
+    
+    
+    
+    tests = gpd.GeoDataFrame(tests, 
+        geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
+    tests = tests.set_crs('epsg:4326')
+    tIT = sjoin(tests, t_gdf, how='left')
+   
+    if len(selections) == 0:
+
+        fig = px.histogram(tIT, x='CollectionDate')
   
     # Second layer - Highlights ----------#
-    if len(selections) > 0:
+    else:
+        df3 = tIT.loc[selections]
+        print(df3)
         # highlights contain the geojson information for only 
         # the selected districts
         highlights = get_highlights(selections)
-
-        fig.add_trace(
-            px.choropleth_mapbox(t_gdf, geojson=highlights, 
-                                 color="STATEFP20",
-                                 locations=t_gdf.index, 
-                                #  featureidkey="properties.TRACTCE20",                                 
-                                 opacity=1).data[0]
-        )
+        print(highlights)
+        tIT = tIT
+        fig = px.histogram(tIT, x='CollectionDate')
+      
     #------------------------------------#
-    fig.update_layout(mapbox_style="carto-positron", 
-                      mapbox_zoom=zoom,
-                      mapbox_center={"lat": 39.65, "lon": -104.8},
-                      margin={"r":0,"t":0,"l":0,"b":0},
-                      uirevision='constant')
+    fig.update_layout(bargap=0.2)
     
     return fig
 
@@ -129,8 +141,8 @@ app.layout = html.Div([
             min_date_allowed=date(1995, 8, 5),
             max_date_allowed=date(2023, 1, 1),
             start_date=date(2022, 10, 25),
-            initial_visible_month=date(2022, 10, 1),
-            end_date=date(2022, 12, 20)
+            initial_visible_month=date(2022, 11, 14),
+            end_date=date(2022, 11, 15)
             ),
         ],
             className = 'five columns'
@@ -190,7 +202,7 @@ app.layout = html.Div([
         dcc.Loading(
             dcc.Graph(
                 id="indicator-graph",
-                figure=blank_fig(row_heights[0]),
+                figure=blank_fig(row_heights[1]),
                 config={"displayModeBar": False},
             ),
             className="svg-container",
@@ -201,59 +213,59 @@ app.layout = html.Div([
         id="indicator-div",
     ),
     html.Div([
-        html.Div([
-            html.H4([
-                "Placeholder",
-                html.Img(
-                    id="show-placeholder-modal",
-                    src="assets/question-circle-solid.svg",
-                    n_clicks=0,
-                    className="info-icon",
-                ),
-            ]),
-        ],
-            className="container_title",
-        ),
+        # html.Div([
+        #     html.H4([
+        #         "Tests Selected Tracts",
+        #         # html.Img(
+        #         #     id="show-placeholder-modal",
+        #         #     src="assets/question-circle-solid.svg",
+        #         #     n_clicks=0,
+        #         #     className="info-icon",
+        #         # ),
+        #     ]),
+        # ],
+        #     className="container_title",
+        # ),
         dcc.Loading(
             dcc.Graph(
-                id="placeholder-graph",
-                figure=blank_fig(row_heights[0]),
+                id="test-graph",
+                figure=blank_fig(row_heights[1]),
                 config={"displayModeBar": False},
             ),
             className="svg-container",
-            style={"height": 150},
+            style={"height": 350},
         ),
     ],
-        className="four columns pretty_container",
+        className="eight columns pretty_container",
         id="placeholder-div",
     ),
-    html.Div([
-        html.Div([
-            html.H4([
-                "Placeholder",
-                html.Img(
-                    id="show-placeholder-modal-2",
-                    src="assets/question-circle-solid.svg",
-                    n_clicks=0,
-                    className="info-icon",
-                ),
-            ]),
-        ],
-            className="container_title",
-        ),
-        dcc.Loading(
-            dcc.Graph(
-                id="placeholder-graph-2",
-                figure=blank_fig(row_heights[0]),
-                config={"displayModeBar": False},
-            ),
-            className="svg-container",
-            style={"height": 150},
-        ),
-    ],
-        className="four columns pretty_container",
-        id="placeholder-div-2",
-    ),
+    # html.Div([
+    #     html.Div([
+    #         html.H4([
+    #             "Placeholder",
+    #             html.Img(
+    #                 id="show-placeholder-modal-2",
+    #                 src="assets/question-circle-solid.svg",
+    #                 n_clicks=0,
+    #                 className="info-icon",
+    #             ),
+    #         ]),
+    #     ],
+    #         className="container_title",
+    #     ),
+    #     dcc.Loading(
+    #         dcc.Graph(
+    #             id="placeholder-graph-2",
+    #             figure=blank_fig(row_heights[0]),
+    #             config={"displayModeBar": False},
+    #         ),
+    #         className="svg-container",
+    #         style={"height": 150},
+    #     ),
+    # ],
+    #     className="four columns pretty_container",
+    #     id="placeholder-div-2",
+    # ),
     
     dcc.Store(id='tests', storage_type='session'),
 ])
@@ -272,7 +284,30 @@ def get_tests(start_date, end_date):
     return tests.to_json(date_format='iso')
 
 
+@app.callback(
+    Output('ct', 'figure'),
+    Output('test-graph', 'figure'),
+    Input('ct', 'clickData'),
+    Input('tests', 'data'),
+    Input('zoom', 'value'))
+def update_figure(clickData, tests, zoom):    
+    # tests = pd.read_json(tests)
+  
+    # tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
+    # tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
+    # print(tests)
 
+    
+    # print(clickData)
+    if clickData is not None:            
+        location = clickData['points'][0]['location']
+        # print(location)
+        if location not in selections:
+            selections.add(location)
+        else:
+            selections.remove(location)
+        
+    return get_figure(selections, zoom, tests), get_histogram(selections, zoom, tests)
 
 
 
