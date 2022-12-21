@@ -86,7 +86,7 @@ def get_figure(selections, zoom, tests):
    
     tract_df = t_gdf.merge(tITs, on='TRACTCE20')
     tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
-    print(tract_df.columns)
+    # print(tract_df)
     
     # Base choropleth layer --------------#
     fig = px.choropleth_mapbox(tract_df, 
@@ -311,7 +311,7 @@ def update_figure(clickData, tests, zoom):
   
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
     # tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
-    # print(tests)
+    print(tests)
 
     
     # print(clickData)
