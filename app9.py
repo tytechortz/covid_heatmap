@@ -38,7 +38,7 @@ pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 gdf['TRACTCE20'].astype(str)
 
 t_gdf = gdf.merge(pop, on='TRACTCE20').set_index('TRACTCE20')
-print(t_gdf)
+# print(t_gdf.columns)
 
 
 def blank_fig(height):
@@ -64,22 +64,42 @@ def get_highlights(selections, geojson=t_gdf):
 
 
 def get_figure(selections, zoom, tests):
+    tests = pd.read_json(tests)
+    
+    tests = gpd.GeoDataFrame(tests, 
+        geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
+    tests = tests.set_crs('epsg:4326')
 
-    fig = []
+
+    tIT = sjoin(tests, t_gdf, how='right')
+    # print(tIT.loc['index_right'])
+    print(tIT.columns)
+    print(tIT)
+    tITs = tIT.groupby('TRACTCE20').size().reset_index(name='count')
+    print(tITs)
+    tgdf = t_gdf.merge(tITs, on='TRACTCE20')
+    tgdf['TperCap'] = tgdf['count'] / tgdf['TOTALPOP']
+
+    print(tgdf)
+
+    fig = px.choropleth_mapbox(tgdf, 
+                                geojson=tgdf.geometry, 
+                                color="TperCap",                               
+                                locations=tgdf.index, 
+                                # featureidkey="properties.TRACTCE20",
+                                opacity=0.5)
     #------------------------------------#
-    # fig.update_layout(mapbox_style="carto-positron", 
-    #                   mapbox_zoom=zoom,
-    #                   mapbox_center={"lat": 39.65, "lon": -104.8},
-    #                   margin={"r":0,"t":0,"l":0,"b":0},
-    #                   uirevision='constant')
+    fig.update_layout(mapbox_style="carto-positron", 
+                      mapbox_zoom=zoom,
+                      mapbox_center={"lat": 39.65, "lon": -104.8},
+                      margin={"r":0,"t":0,"l":0,"b":0},
+                      uirevision='constant')
     
     return fig
 
 
 def get_histogram(selections, zoom, tests):
     tests = pd.read_json(tests)
-    
-    
     
     tests = gpd.GeoDataFrame(tests, 
         geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
