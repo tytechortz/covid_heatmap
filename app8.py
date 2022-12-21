@@ -9,6 +9,8 @@ import pandas as pd
 
 from datetime import date
 
+from geopandas.tools import sjoin
+
 # Colors
 bgcolor = "#f3f3f1"  # mapbox light map land color
 
@@ -24,6 +26,8 @@ gdf = gdf.to_crs("epsg:4326")
 gdf = gdf.set_geometry('geometry')
 
 
+
+
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
 pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
@@ -34,8 +38,8 @@ pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 
 gdf['TRACTCE20'].astype(str)
 
-t_gdf = gdf.merge(pop, on='TRACTCE20').set_index('TRACTCE20')
-
+t_gdf = gdf.merge(pop, on='TRACTCE20')
+print(t_gdf.columns)
 
 CT_lookup = pd.Series(t_gdf.geometry.values, index=t_gdf.index)
 
@@ -60,13 +64,35 @@ def get_highlights(selections, geojson=t_gdf, CT_lookup=CT_lookup):
     print(geojson_highlights)
     return geojson_highlights
 
-def get_figure(selections, zoom):
-    print(selections)
+# @app.callback(
+#     Output('')
+#     Input('tests', 'data'),
+
+# )
+
+
+def get_figure(selections, zoom, tests):
+
+    # print(selections)
+
+    tests = gpd.GeoDataFrame(tests, 
+        geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
+    tests = tests.set_crs('epsg:4326')
+
+    tIT = sjoin(tests, t_gdf, how='left')
+    # print(tIT.columns)
+    # print(t_gdf.columns)
+    tITs = tIT.groupby('TRACTCE20').size().reset_index(name='count')
+   
+    tract_df = t_gdf.merge(tITs, on='TRACTCE20')
+    tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
+    print(tract_df.columns)
+    
     # Base choropleth layer --------------#
-    fig = px.choropleth_mapbox(t_gdf, 
-                                geojson=t_gdf.geometry, 
-                                color="TOTALPOP",                               
-                                locations=t_gdf.index, 
+    fig = px.choropleth_mapbox(tract_df, 
+                                geojson=tract_df.geometry, 
+                                color="TperCap",                               
+                                locations=tract_df.index, 
                                 # featureidkey="properties.TRACTCE20",
                                 opacity=0.5)
 
@@ -268,20 +294,24 @@ app.layout = html.Div([
     Input('dates', 'end_date'))
 def get_tests(start_date, end_date):
     tests = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/TestingData_coordinates.csv')
-
+    # print(start_date)
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
     tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
-    
+    # print(tests)
     return tests.to_json(date_format='iso')
 
 
 @app.callback(
     Output('ct', 'figure'),
     Input('ct', 'clickData'),
+    Input('tests', 'data'),
     Input('zoom', 'value'))
-def update_figure(clickData, zoom):    
-
-
+def update_figure(clickData, tests, zoom):    
+    tests = pd.read_json(tests)
+  
+    tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
+    # tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
+    # print(tests)
 
     
     # print(clickData)
@@ -293,7 +323,7 @@ def update_figure(clickData, zoom):
         else:
             selections.remove(location)
         
-    return get_figure(selections, zoom)
+    return get_figure(selections, zoom, tests)
 
 
 @app.callback(
