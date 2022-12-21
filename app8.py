@@ -59,7 +59,7 @@ def blank_fig(height):
 
 def get_highlights(selections, geojson=t_gdf, CT_lookup=CT_lookup):
     # geojson_highlights = dict()
-    print(selections)
+    # print(selections)
     geojson_highlights = geojson.loc[selections]
     print(geojson_highlights)
     return geojson_highlights
@@ -119,6 +119,44 @@ def get_figure(selections, zoom, tests):
     
     return fig
 
+def get_histogram(selections, zoom, tests):
+
+    
+    
+    print(tests)
+    tests = gpd.GeoDataFrame(tests, 
+        geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
+    tests = tests.set_crs('epsg:4326')
+    tIT = sjoin(tests, t_gdf, how='left')
+    # print(len(tIT))
+    # print(tIT.columns)
+    # print(t_gdf.columns)
+    # tITs = tIT.groupby(['TRACTCE20', 'CollectionDate']).size().reset_index(name='count')
+    # print(tITs.columns)
+    # print(len(tITs))
+    # tract_df = t_gdf.merge(tIT, on='TRACTCE20')
+    # # tract_df['TperCap'] = tract_df['count'] / tract_df['TOTALPOP']
+    # print(tract_df)
+    if len(selections) == 0:
+
+        fig = px.histogram(tIT, x='CollectionDate')
+  
+    # Second layer - Highlights ----------#
+    else:
+        df3 = tIT.loc[selections]
+        print(df3)
+        # highlights contain the geojson information for only 
+        # the selected districts
+        highlights = get_highlights(selections)
+        print(highlights)
+        tIT = tIT
+        fig = px.histogram(tIT, x='CollectionDate')
+      
+    #------------------------------------#
+    fig.update_layout(bargap=0.2)
+    
+    return fig
+
 
 
 
@@ -159,8 +197,8 @@ app.layout = html.Div([
             min_date_allowed=date(1995, 8, 5),
             max_date_allowed=date(2023, 1, 1),
             start_date=date(2022, 10, 25),
-            initial_visible_month=date(2022, 10, 1),
-            end_date=date(2022, 12, 20)
+            initial_visible_month=date(2022, 11, 14),
+            end_date=date(2022, 11, 15)
             ),
         ],
             className = 'five columns'
@@ -303,6 +341,7 @@ def get_tests(start_date, end_date):
 
 @app.callback(
     Output('ct', 'figure'),
+    Output('test-graph', 'figure'),
     Input('ct', 'clickData'),
     Input('tests', 'data'),
     Input('zoom', 'value'))
@@ -317,13 +356,13 @@ def update_figure(clickData, tests, zoom):
     # print(clickData)
     if clickData is not None:            
         location = clickData['points'][0]['location']
-        print(location)
+        # print(location)
         if location not in selections:
             selections.add(location)
         else:
             selections.remove(location)
         
-    return get_figure(selections, zoom, tests)
+    return get_figure(selections, zoom, tests), get_histogram(selections, zoom, tests)
 
 
 @app.callback(
@@ -351,21 +390,21 @@ def update_indicator(tests):
 
     return n_selected_indicator
 
-@app.callback(
-    Output("test-graph", "figure"),
-    Input("tests", "data"))
-def update_indicator(tests):
-    tests = pd.read_json(tests)
-    print(tests)
-    # total_tests = tests.shape[0]
+# @app.callback(
+#     Output("test-graph", "figure"),
+#     Input("tests", "data"))
+# def update_indicator(tests, selections):
+#     tests = pd.read_json(tests)
+#     print(tests)
+#     # total_tests = tests.shape[0]
     
-    fig = px.histogram(tests, x='CollectionDate')
+#     fig = px.histogram(tests, x='CollectionDate')
 
-    fig.update_layout(bargap=0.2)
+#     fig.update_layout(bargap=0.2)
 
 
 
-    return fig
+#     return fig
 
 
 
