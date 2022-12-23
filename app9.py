@@ -123,9 +123,9 @@ def get_histogram(selections, zoom, tests):
     print(tit.columns)
     tits = (tit.groupby(['TRACTCE20', 'CollectionDate'], as_index=False).agg(count=('CollectionDate', 'count')))
     print(tits)
-    # ti = tit.groupby('CollectionDate').sum().reset_index()
-    # print(ti)
-    fig = px.bar(x=tits['CollectionDate'], y=tits['count'])
+    tit = tits.groupby('CollectionDate').sum().reset_index()
+    print(tit)
+    fig = px.bar(x=tit['CollectionDate'], y=tit['count'])
 
 #     if len(selections) > 0:
   
