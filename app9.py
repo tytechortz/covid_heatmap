@@ -26,19 +26,26 @@ app = dash.Dash(__name__)
 gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Tracts_2020_SHAPE_WGS/Census_Tracts_2020_WGS.shp')
 gdf = gdf.to_crs("epsg:4326")
 gdf = gdf.set_geometry('geometry')
+# print(gdf.columns)
+gdf = gdf.drop(gdf.columns[[0,1,3,4,5,6,7,8,9,10,11,12,13,14,15]], axis=1)
+# print(gdf.columns)
+
 
 pop = pd.read_csv('/Users/jamesswank/Python_projects/covid_heatmap/Tract_Data_2020.csv')
 pop['TRACTCE20'] = pop['TRACTCE20'].astype(str)
 pop['TRACTCE20'] = pop['TRACTCE20'].str.zfill(6)
 pop['TOTALPOP'] = pop['TOTALPOP'].astype(int)
-pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
-pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
+# pop['POPBIN'] = [1 if x<=3061 else 2 if 3061<x<=3817 else 3 if 3817<x<=5003 else 4 for x in pop['TOTALPOP']]
+# pop['COLOR'] = ['blue' if x==1 else 'green' if x==2 else 'orange' if x==3 else 'red' for x in pop['POPBIN']]
 pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 
 gdf['TRACTCE20'].astype(str)
 
-t_gdf = gdf.merge(pop, on='TRACTCE20').set_index('TRACTCE20')
-# print(t_gdf.columns)
+tgdf = gdf.merge(pop, on='TRACTCE20')
+tgdf = tgdf.drop(tgdf.columns[[2,3,4]], axis=1)
+# tgdf['tests'] = 1
+# print(tgdf)
+# print(tgdf.columns)
 
 
 def blank_fig(height):
@@ -55,37 +62,38 @@ def blank_fig(height):
         },
     }
 
-def get_highlights(selections, geojson=t_gdf):
+def get_highlights(selections, geojson=tgdf):
     # geojson_highlights = dict()
-    print(selections)
+    # print(selections)
     geojson_highlights = geojson.loc[selections]
-    print(geojson_highlights)
+    # print(geojson_highlights)
     return geojson_highlights
 
 
 def get_figure(selections, zoom, tests):
     tests = pd.read_json(tests)
-    print(selections)
+    # print(selections)
     tests = gpd.GeoDataFrame(tests, 
         geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
     tests = tests.set_crs('epsg:4326')
 
 
-    tIT = sjoin(tests, t_gdf, how='right')
+    tIT = sjoin(tests, tgdf, how='inner')
     # print(tIT.loc['index_right'])
     # print(tIT.columns)
     # print(tIT)
     tITs = tIT.groupby('TRACTCE20').size().reset_index(name='count')
     # print(tITs)
-    tgdf = t_gdf.merge(tITs, on='TRACTCE20')
-    tgdf['TperCap'] = tgdf['count'] / tgdf['TOTALPOP']
-    tgdf = tgdf.set_index('TRACTCE20')
-    print(tgdf)
+    gdf = tgdf.merge(tITs, on='TRACTCE20')
+    gdf['TperCap'] = gdf['count'] / gdf['TOTALPOP']
+    gdf = gdf.set_index('TRACTCE20')
+    # print(gdf)
+    # print(tgdf.columns)
 
-    fig = px.choropleth_mapbox(tgdf, 
-                                geojson=tgdf.geometry, 
-                                color="TperCap",                               
-                                locations=tgdf.index, 
+    fig = px.choropleth_mapbox(gdf, 
+                                geojson=gdf.geometry, 
+                                color="count",                               
+                                locations=gdf.index, 
                                 # featureidkey="properties.TRACTCE20",
                                 opacity=0.5)
     #------------------------------------#
@@ -100,29 +108,39 @@ def get_figure(selections, zoom, tests):
 
 def get_histogram(selections, zoom, tests):
     tests = pd.read_json(tests)
-    
+    # print(selections)
     tests = gpd.GeoDataFrame(tests, 
         geometry = gpd.points_from_xy(tests['geolongitude'], tests['geolatitude']))
     tests = tests.set_crs('epsg:4326')
-    tIT = sjoin(tests, t_gdf, how='left')
-    # print(tIT)
-   
-    if len(selections) == 0:
 
-        fig = px.histogram(tIT, x='CollectionDate')
+
+    tit = sjoin(tgdf, tests, how='right')
+    print(tit.columns)
+    tit = tit.drop(tit.columns[[0,3,4]], axis=1)
+    # tit['count'] = 
+    print(tit)
+    
+    print(tit.columns)
+    # tits = (tit.groupby(['TRACTCE20', 'CollectionDate'], as_index=False).agg(count=('CollectionDate', 'count')))
+    # print(tits)
+    # ti = tit.groupby('CollectionDate').sum().reset_index()
+    # print(ti)
+    fig = px.bar(x=tit['CollectionDate'], y=tit['tests'])
+
+#     if len(selections) > 0:
   
-    # Second layer - Highlights ----------#
-    else:
-        df3 = tIT.loc[selections]
-        print(df3.columns)
-        # highlights contain the geojson information for only 
-        # the selected districts
-        highlights = get_highlights(selections)
-        print(highlights.columns)
-        tIT = tIT
-        fig = px.histogram(tIT, x='CollectionDate')
+#     # Second layer - Highlights ----------#
+
+#         df3 = tgdf.loc[tgdf.index.isin(selections)]
+#         # print(df3.columns)
+#         # highlights contain the geojson information for only 
+#         # the selected districts
+#         highlights = get_highlights(selections)
+#         # print(highlights.columns)
+       
+#         fig = px.histogram(tgdf, x='CollectionDate')
       
-    #------------------------------------#
+#     #------------------------------------#
     fig.update_layout(bargap=0.2)
     
     return fig
