@@ -27,7 +27,7 @@ gdf = gpd.read_file('/Users/jamesswank/Python_projects/covid_heatmap/Census_Trac
 gdf = gdf.to_crs("epsg:4326")
 gdf = gdf.set_geometry('geometry')
 # print(gdf.columns)
-gdf = gdf.drop(gdf.columns[[0,1,3,4,5,6,7,8,9,10,11,12,13,14,15]], axis=1)
+gdf = gdf.drop(gdf.columns[[1,3,4,5,6,7,8,9,10,11,12,13,14,15]], axis=1)
 # print(gdf.columns)
 
 
@@ -42,7 +42,8 @@ pop = pop.drop(['COUNTYFP20', 'GEOID20'], axis=1)
 gdf['TRACTCE20'].astype(str)
 
 tgdf = gdf.merge(pop, on='TRACTCE20')
-tgdf = tgdf.drop(tgdf.columns[[2,3,4]], axis=1)
+# print(tgdf.columns)
+tgdf = tgdf.drop(tgdf.columns[[3,4,5]], axis=1)
 # tgdf['tests'] = 1
 # print(tgdf)
 # print(tgdf.columns)
@@ -64,8 +65,9 @@ def blank_fig(height):
 
 def get_highlights(selections, geojson=tgdf):
     # geojson_highlights = dict()
-    # print(selections)
-    geojson_highlights = geojson.loc[selections]
+    # print(geojson.columns)
+    # geojson_highlights = geojson.loc[selections]
+    geojson_highlights = geojson.loc[geojson['TRACTCE20'].isin(selections)]
     # print(geojson_highlights)
     return geojson_highlights
 
@@ -96,6 +98,22 @@ def get_figure(selections, zoom, tests):
                                 locations=gdf.index, 
                                 # featureidkey="properties.TRACTCE20",
                                 opacity=0.5)
+
+    # Second layer - Highlights ----------#
+    if len(selections) > 0:
+        # highlights contain the geojson information for only 
+        # the selected districts
+        print(selections)
+        highlights = get_highlights(selections)
+        print(highlights)
+        fig.add_trace(
+            px.choropleth_mapbox(tgdf, 
+                                geojson=highlights, 
+                                color="STATEFP20",
+                                locations=tgdf.index, 
+                                #  featureidkey="properties.TRACTCE20",                                 
+                                opacity=1).data[0]
+        )
     #------------------------------------#
     fig.update_layout(mapbox_style="carto-positron", 
                       mapbox_zoom=zoom,
@@ -115,30 +133,32 @@ def get_histogram(selections, zoom, tests):
 
 
     tit = sjoin(tgdf, tests, how='right')
-    print(tit.columns)
+    # print(tit.columns)
     tit = tit.drop(tit.columns[[0,3,4]], axis=1)
     # tit['count'] = 
-    print(tit)
+    # print(tit)
     
-    print(tit.columns)
+    # print(tit.columns)
     tits = (tit.groupby(['TRACTCE20', 'CollectionDate'], as_index=False).agg(count=('CollectionDate', 'count')))
-    print(tits)
+    # print(tits)
     tit = tits.groupby('CollectionDate').sum().reset_index()
-    print(tit)
+    # print(tit)
+    # print(tit.columns)
     fig = px.bar(x=tit['CollectionDate'], y=tit['count'])
 
-#     if len(selections) > 0:
+    if len(selections) > 0:
   
 #     # Second layer - Highlights ----------#
 
-#         df3 = tgdf.loc[tgdf.index.isin(selections)]
-#         # print(df3.columns)
+        df3 = tits.loc[tits['TRACTCE20'].isin(selections)]
+        # print(df3.columns)
+        # print(df3)
 #         # highlights contain the geojson information for only 
 #         # the selected districts
 #         highlights = get_highlights(selections)
 #         # print(highlights.columns)
        
-#         fig = px.histogram(tgdf, x='CollectionDate')
+        fig = px.bar(x=df3['CollectionDate'], y=df3['count'])
       
 #     #------------------------------------#
     fig.update_layout(bargap=0.2)

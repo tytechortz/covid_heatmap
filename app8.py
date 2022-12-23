@@ -102,7 +102,7 @@ def get_figure(selections, zoom, tests):
         # highlights contain the geojson information for only 
         # the selected districts
         highlights = get_highlights(selections)
-
+        print(highlights)
         fig.add_trace(
             px.choropleth_mapbox(t_gdf, geojson=highlights, 
                                  color="STATEFP20",
