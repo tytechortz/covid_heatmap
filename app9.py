@@ -181,7 +181,7 @@ app.layout = html.Div([
             max_date_allowed=date(2023, 1, 1),
             start_date=date(2022, 10, 25),
             initial_visible_month=date(2022, 11, 14),
-            end_date=date(2022, 11, 15)
+            end_date=date(2022, 11, 16)
             ),
         ],
             className = 'five columns'
