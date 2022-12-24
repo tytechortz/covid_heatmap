@@ -325,6 +325,20 @@ app.layout = html.Div([
     #     className="four columns pretty_container",
     #     id="placeholder-div-2",
     # ),
+    html.Div([
+        dcc.Loading(
+            dcc.Graph(
+                id="heat-graph",
+                figure=blank_fig(row_heights[1]),
+                config={"displayModeBar": False},
+            ),
+            className="svg-container",
+            style={"height": 350},
+        ),
+    ],
+        className="twelve columns pretty_container",
+        id="placeholder-div",
+    ),
     
     dcc.Store(id='tests', storage_type='session'),
 ])
