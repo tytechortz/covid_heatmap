@@ -1,5 +1,7 @@
 import plotly.express as px
 import geopandas as gpd
+import plotly.graph_objects as go
+
 
 import dash
 from dash import dcc, html
@@ -328,7 +330,7 @@ app.layout = html.Div([
     html.Div([
         dcc.Loading(
             dcc.Graph(
-                id="heat-graph",
+                id="heatmap",
                 figure=blank_fig(row_heights[1]),
                 config={"displayModeBar": False},
             ),
@@ -337,7 +339,7 @@ app.layout = html.Div([
         ),
     ],
         className="twelve columns pretty_container",
-        id="placeholder-div",
+        id="placeholder-div-3",
     ),
     
     dcc.Store(id='tests', storage_type='session'),
@@ -381,6 +383,38 @@ def update_figure(clickData, tests, zoom):
             selections.remove(location)
         
     return get_figure(selections, zoom, tests), get_histogram(selections, zoom, tests)
+
+@app.callback(
+    Output('heatmap', 'figure'),
+    Input('tests', 'data'),
+    Input('dates', 'start_date'),
+    Input('dates', 'end_date'))
+def update_figure(tests, start_date, end_date):    
+    tests = pd.read_json(tests)
+  
+    tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
+    tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
+    print(tests)
+    tests['mag']=3
+
+    fig=()    
+    fig = go.Figure(
+        go.Densitymapbox(
+            lat=tests['geolatitude'],
+            lon=tests['geolongitude'],
+            z=tests['mag'],
+            radius=5
+        )
+    )
+
+    fig.update_layout(mapbox_style="carto-positron", 
+                    #   mapbox_zoom=zoom,
+                      mapbox_center={"lat": 39.65, "lon": -104.8},
+                      margin={"r":0,"t":0,"l":0,"b":0},
+                      mapbox_zoom=10.4,
+                      uirevision='constant')
+        
+    return fig
 
 
 
