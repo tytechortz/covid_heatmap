@@ -91,6 +91,10 @@ def get_figure(selections, tests, maptype):
     gdf = tgdf.merge(tITs, on='TRACTCE20')
     gdf['TperCap'] = gdf['count'] / gdf['TOTALPOP']
     gdf = gdf.set_index('TRACTCE20')
+    if maptype == 'total':
+        color = 'count'
+    else:
+        color = 'TperCap'
     # print(gdf)
     # print(tgdf.columns)
 
@@ -105,15 +109,17 @@ def get_figure(selections, tests, maptype):
     if len(selections) > 0:
         # highlights contain the geojson information for only 
         # the selected districts
-        print(selections)
+        # print(selections)
         highlights = get_highlights(selections)
         print(highlights)
+        print(tgdf.columns)
+        print(tgdf.index)
         fig.add_trace(
             px.choropleth_mapbox(tgdf, 
                                 geojson=highlights, 
                                 color="STATEFP20",
-                                locations=tgdf.index, 
-                                #  featureidkey="properties.TRACTCE20",                                 
+                                locations='TRACTCE20', 
+                                featureidkey="properties.TRACTCE20",                                 
                                 opacity=1).data[0]
         )
     #------------------------------------#
@@ -385,7 +391,14 @@ def update_figure(clickData, maptype, tests):
     # tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
     # tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
     # print(tests)
-
+    # location = clickData['points'][0]['location']
+    # print(location)
+    # if location not in selections:
+    #         selections.add(location)
+    #         print(selections)
+    # else:
+    #     selections.remove(location)
+    #     print(selections)
     
     # print(clickData)
     if clickData is not None:            
@@ -393,9 +406,10 @@ def update_figure(clickData, maptype, tests):
         # print(location)
         if location not in selections:
             selections.add(location)
+            print(selections)
         else:
             selections.remove(location)
-        
+            print(selections)
     return get_figure(selections, tests, maptype), get_histogram(selections,tests, maptype)
 
 @app.callback(
@@ -408,7 +422,7 @@ def update_figure(tests, start_date, end_date):
   
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
     tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
-    print(tests)
+    # print(tests)
     tests['mag']=3
 
     fig=()    
