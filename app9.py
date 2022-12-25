@@ -74,7 +74,7 @@ def get_highlights(selections, geojson=tgdf):
     return geojson_highlights
 
 
-def get_figure(selections, tests):
+def get_figure(selections, tests, maptype):
     tests = pd.read_json(tests)
     # print(selections)
     tests = gpd.GeoDataFrame(tests, 
@@ -126,7 +126,7 @@ def get_figure(selections, tests):
     return fig
 
 
-def get_histogram(selections, tests):
+def get_histogram(selections, tests, maptype):
     tests = pd.read_json(tests)
     # print(selections)
     tests = gpd.GeoDataFrame(tests, 
@@ -221,11 +221,12 @@ app.layout = html.Div([
         # ),
         html.Div([
             dcc.RadioItems(
-            id = 'map-type',
+            id = 'maptype',
             options = [
                 {'label': 'Total Tests', 'value': 'total'},
                 {'label': 'Test Per 100K', 'value': 'per'}
-            ]
+            ],
+            value = 'total'
             # marks = {i for i in range(2020,2022)}
             ),
         ],
@@ -375,9 +376,10 @@ def get_tests(start_date, end_date):
     Output('ct', 'figure'),
     Output('test-graph', 'figure'),
     Input('ct', 'clickData'),
+    Input('maptype', 'value'),
     Input('tests', 'data'))
     # Input('zoom', 'value'))
-def update_figure(clickData, tests):    
+def update_figure(clickData, maptype, tests):    
     # tests = pd.read_json(tests)
   
     # tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
@@ -394,7 +396,7 @@ def update_figure(clickData, tests):
         else:
             selections.remove(location)
         
-    return get_figure(selections, tests), get_histogram(selections,tests)
+    return get_figure(selections, tests, maptype), get_histogram(selections,tests, maptype)
 
 @app.callback(
     Output('heatmap', 'figure'),
