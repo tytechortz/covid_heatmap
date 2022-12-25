@@ -74,7 +74,7 @@ def get_highlights(selections, geojson=tgdf):
     return geojson_highlights
 
 
-def get_figure(selections, zoom, tests):
+def get_figure(selections, tests):
     tests = pd.read_json(tests)
     # print(selections)
     tests = gpd.GeoDataFrame(tests, 
@@ -118,7 +118,7 @@ def get_figure(selections, zoom, tests):
         )
     #------------------------------------#
     fig.update_layout(mapbox_style="carto-positron", 
-                      mapbox_zoom=zoom,
+                      mapbox_zoom=10.4,
                       mapbox_center={"lat": 39.65, "lon": -104.8},
                       margin={"r":0,"t":0,"l":0,"b":0},
                       uirevision='constant')
@@ -126,7 +126,7 @@ def get_figure(selections, zoom, tests):
     return fig
 
 
-def get_histogram(selections, zoom, tests):
+def get_histogram(selections, tests):
     tests = pd.read_json(tests)
     # print(selections)
     tests = gpd.GeoDataFrame(tests, 
@@ -208,12 +208,24 @@ app.layout = html.Div([
         ],
             className = 'five columns'
         ),
+        # html.Div([
+        #     dcc.Slider(
+        #     id = 'zoom',
+        #     min = 8,
+        #     max = 11,
+        #     value = 10.4,
+        #     # marks = {i for i in range(2020,2022)}
+        #     ),
+        # ],
+        #     className = 'three columns'
+        # ),
         html.Div([
-            dcc.Slider(
-            id = 'zoom',
-            min = 8,
-            max = 11,
-            value = 10.4,
+            dcc.RadioItems(
+            id = 'map-type',
+            options = [
+                {'label': 'Total Tests', 'value': 'total'},
+                {'label': 'Test Per 100K', 'value': 'per'}
+            ]
             # marks = {i for i in range(2020,2022)}
             ),
         ],
@@ -363,9 +375,9 @@ def get_tests(start_date, end_date):
     Output('ct', 'figure'),
     Output('test-graph', 'figure'),
     Input('ct', 'clickData'),
-    Input('tests', 'data'),
-    Input('zoom', 'value'))
-def update_figure(clickData, tests, zoom):    
+    Input('tests', 'data'))
+    # Input('zoom', 'value'))
+def update_figure(clickData, tests):    
     # tests = pd.read_json(tests)
   
     # tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
@@ -382,7 +394,7 @@ def update_figure(clickData, tests, zoom):
         else:
             selections.remove(location)
         
-    return get_figure(selections, zoom, tests), get_histogram(selections, zoom, tests)
+    return get_figure(selections, tests), get_histogram(selections,tests)
 
 @app.callback(
     Output('heatmap', 'figure'),
@@ -403,7 +415,8 @@ def update_figure(tests, start_date, end_date):
             lat=tests['geolatitude'],
             lon=tests['geolongitude'],
             z=tests['mag'],
-            radius=5
+            radius=5,
+            opacity=.5
         )
     )
 
