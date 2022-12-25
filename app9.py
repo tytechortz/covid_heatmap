@@ -111,9 +111,9 @@ def get_figure(selections, tests, maptype):
         # the selected districts
         # print(selections)
         highlights = get_highlights(selections)
-        print(highlights)
-        print(tgdf.columns)
-        print(tgdf.index)
+        # print(highlights)
+        # print(tgdf.columns)
+        # print(tgdf.index)
         fig.add_trace(
             px.choropleth_mapbox(tgdf, 
                                 geojson=highlights, 
@@ -319,33 +319,32 @@ app.layout = html.Div([
         className="eight columns pretty_container",
         id="placeholder-div",
     ),
-    # html.Div([
-    #     html.Div([
-    #         html.H4([
-    #             "Placeholder",
-    #             html.Img(
-    #                 id="show-placeholder-modal-2",
-    #                 src="assets/question-circle-solid.svg",
-    #                 n_clicks=0,
-    #                 className="info-icon",
-    #             ),
-    #         ]),
-    #     ],
-    #         className="container_title",
-    #     ),
-    #     dcc.Loading(
-    #         dcc.Graph(
-    #             id="placeholder-graph-2",
-    #             figure=blank_fig(row_heights[0]),
-    #             config={"displayModeBar": False},
-    #         ),
-    #         className="svg-container",
-    #         style={"height": 150},
-    #     ),
-    # ],
-    #     className="four columns pretty_container",
-    #     id="placeholder-div-2",
-    # ),
+    html.Div([
+        html.Div([
+            dcc.Slider(
+            id = 'heat-opacity',
+            min = 0,
+            max = 1,
+            value = 1,
+            # marks = {i for i in range(2020,2022)}
+            ),
+        ],
+            className = 'three columns'
+        ),
+        html.Div([
+            dcc.Slider(
+            id = 'heat-dates',
+            min = 8,
+            max = 11,
+            value = 10.4,
+            # marks = {i for i in range(2020,2022)}
+            ),
+        ],
+            className = 'seven columns'
+        ),
+    ],
+        className = 'row'
+    ),
     html.Div([
         dcc.Loading(
             dcc.Graph(
@@ -416,8 +415,9 @@ def update_figure(clickData, maptype, tests):
     Output('heatmap', 'figure'),
     Input('tests', 'data'),
     Input('dates', 'start_date'),
-    Input('dates', 'end_date'))
-def update_figure(tests, start_date, end_date):    
+    Input('dates', 'end_date'),
+    Input('heat-opacity', 'value'))
+def update_figure(tests, start_date, end_date, opacity):    
     tests = pd.read_json(tests)
   
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
@@ -432,7 +432,7 @@ def update_figure(tests, start_date, end_date):
             lon=tests['geolongitude'],
             z=tests['mag'],
             radius=5,
-            opacity=.5
+            opacity=opacity
         )
     )
 
