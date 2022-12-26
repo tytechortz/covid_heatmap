@@ -405,24 +405,25 @@ def update_figure(clickData, maptype, tests):
         # print(location)
         if location not in selections:
             selections.add(location)
-            print(selections)
+            # print(selections)
         else:
             selections.remove(location)
-            print(selections)
+            # print(selections)
     return get_figure(selections, tests, maptype), get_histogram(selections,tests, maptype)
 
 @app.callback(
     Output('heatmap', 'figure'),
     Input('tests', 'data'),
-    Input('dates', 'start_date'),
-    Input('dates', 'end_date'),
+    Input('heat-dates', 'value'),
     Input('heat-opacity', 'value'))
-def update_figure(tests, start_date, end_date, opacity):    
+def update_figure(tests, dates, opacity):    
     tests = pd.read_json(tests)
-  
+    # print(start_date)
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
-    tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
-    # print(tests)
+    tests.CollectionDate.dt.strftime('%Y-%m-%d')
+    tests['DateCount'] = tests['CollectionDate'].factorize()[0] + 1
+    # tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
+    print(tests)
     tests['mag']=3
 
     fig=()    
