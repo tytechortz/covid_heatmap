@@ -334,9 +334,9 @@ app.layout = html.Div([
         html.Div([
             dcc.Slider(
             id = 'heat-dates',
-            min = 8,
-            max = 11,
-            value = 10.4,
+            min = 1,
+            max = 22,
+            value = 22,
             # marks = {i for i in range(2020,2022)}
             ),
         ],
@@ -346,7 +346,7 @@ app.layout = html.Div([
         className = 'row'
     ),
     html.Div([
-        dcc.Loading(
+        html.Div(
             dcc.Graph(
                 id="heatmap",
                 figure=blank_fig(row_heights[1]),
@@ -418,20 +418,21 @@ def update_figure(clickData, maptype, tests):
     Input('heat-opacity', 'value'))
 def update_figure(tests, dates, opacity):    
     tests = pd.read_json(tests)
-    # print(start_date)
+    print(dates)
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
     tests.CollectionDate.dt.strftime('%Y-%m-%d')
     tests['DateCount'] = tests['CollectionDate'].factorize()[0] + 1
+    filtered_tests = tests[(tests.DateCount <= dates)]
     # tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
-    print(tests)
-    tests['mag']=3
+    # print(filtered_tests)
+    filtered_tests['mag']=3
 
     fig=()    
     fig = go.Figure(
         go.Densitymapbox(
-            lat=tests['geolatitude'],
-            lon=tests['geolongitude'],
-            z=tests['mag'],
+            lat=filtered_tests['geolatitude'],
+            lon=filtered_tests['geolongitude'],
+            z=filtered_tests['mag'],
             radius=5,
             opacity=opacity
         )
