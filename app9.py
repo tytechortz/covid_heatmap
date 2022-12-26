@@ -332,13 +332,7 @@ app.layout = html.Div([
             className = 'three columns'
         ),
         html.Div([
-            dcc.Slider(
-            id = 'heat-dates',
-            min = 1,
-            max = 22,
-            value = 22,
-            # marks = {i for i in range(2020,2022)}
-            ),
+            dcc.RangeSlider(1,22, value=[1,22], id = 'heat-dates')
         ],
             className = 'seven columns'
         ),
@@ -422,10 +416,10 @@ def update_figure(tests, dates, opacity):
     tests['CollectionDate'] = pd.to_datetime(tests['CollectionDate'])
     tests.CollectionDate.dt.strftime('%Y-%m-%d')
     tests['DateCount'] = tests['CollectionDate'].factorize()[0] + 1
-    filtered_tests = tests[(tests.DateCount <= dates)]
+    filtered_tests = tests[tests.DateCount.between(dates[0], dates[1])]
     # tests = tests[(tests['CollectionDate'] >= start_date) & (tests['CollectionDate'] < end_date)]
     # print(filtered_tests)
-    filtered_tests['mag']=3
+    filtered_tests['mag']=1
 
     fig=()    
     fig = go.Figure(
